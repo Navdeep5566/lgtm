@@ -445,12 +445,13 @@ spec:
           "id": 8,
           "type": "stat",
           "title": "Memory Info",
+          "description": "Total memory usage, requests, and limits for the selected namespace/pod scope.",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource_mimir}"
           },
           "gridPos": {
-            "h": 7,
+            "h": 8,
             "w": 12,
             "x": 0,
             "y": 31
@@ -461,7 +462,7 @@ spec:
                 "type": "prometheus",
                 "uid": "${datasource_mimir}"
               },
-              "expr": "sum by(namespace) (container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"})",
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"})",
               "refId": "A",
               "legendFormat": "Usage",
               "range": true
@@ -471,7 +472,7 @@ spec:
                 "type": "prometheus",
                 "uid": "${datasource_mimir}"
               },
-              "expr": "sum by(namespace) (kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "expr": "sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
               "refId": "B",
               "legendFormat": "Requests",
               "range": true
@@ -481,7 +482,7 @@ spec:
                 "type": "prometheus",
                 "uid": "${datasource_mimir}"
               },
-              "expr": "sum by(namespace) (kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "expr": "sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
               "refId": "C",
               "legendFormat": "Limits",
               "range": true
@@ -492,37 +493,125 @@ spec:
               "color": {
                 "mode": "thresholds"
               },
+              "decimals": 1,
+              "unit": "decbytes",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {
                     "color": "green",
                     "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 8589934592
+                  },
+                  {
+                    "color": "red",
+                    "value": 12884901888
                   }
                 ]
               }
-            }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Usage"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Usage"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "decbytes"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Requests"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Requests"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "decbytes"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Limits"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Limits"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "decbytes"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "orange",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "reduceOptions": {
               "calcs": [
                 "lastNotNull"
-              ]
+              ],
+              "fields": "",
+              "values": false
             },
             "colorMode": "value",
-            "graphMode": "area"
+            "graphMode": "none",
+            "textMode": "value_and_name",
+            "wideLayout": true,
+            "orientation": "horizontal",
+            "showPercentChange": false
           }
         },
         {
           "id": 7,
           "type": "stat",
           "title": "CPU Info",
+          "description": "Total CPU usage, requests, and limits (cores) for the selected namespace/pod scope.",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource_mimir}"
           },
           "gridPos": {
-            "h": 7,
+            "h": 8,
             "w": 12,
             "x": 12,
             "y": 31
@@ -533,7 +622,7 @@ spec:
                 "type": "prometheus",
                 "uid": "${datasource_mimir}"
               },
-              "expr": "sum by(namespace) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m]))",
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m]))",
               "refId": "A",
               "legendFormat": "Usage",
               "range": true
@@ -543,7 +632,7 @@ spec:
                 "type": "prometheus",
                 "uid": "${datasource_mimir}"
               },
-              "expr": "sum by(namespace) (kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\", pod=~\"$pod\"})",
+              "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\", pod=~\"$pod\"})",
               "refId": "B",
               "legendFormat": "Requests",
               "range": true
@@ -553,7 +642,7 @@ spec:
                 "type": "prometheus",
                 "uid": "${datasource_mimir}"
               },
-              "expr": "sum by(namespace) (kube_pod_container_resource_limits{resource=\"cpu\", namespace=~\"$namespace\", pod=~\"$pod\"})",
+              "expr": "sum(kube_pod_container_resource_limits{resource=\"cpu\", namespace=~\"$namespace\", pod=~\"$pod\"})",
               "refId": "C",
               "legendFormat": "Limits",
               "range": true
@@ -564,32 +653,98 @@ spec:
               "color": {
                 "mode": "thresholds"
               },
+              "decimals": 2,
+              "unit": "short",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {
                     "color": "green",
                     "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 4
+                  },
+                  {
+                    "color": "red",
+                    "value": 8
                   }
                 ]
               }
-            }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Usage"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Usage (cores)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Requests"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Requests (cores)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Limits"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Limits (cores)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "reduceOptions": {
               "calcs": [
                 "lastNotNull"
-              ]
+              ],
+              "fields": "",
+              "values": false
             },
             "colorMode": "value",
-            "graphMode": "area"
+            "graphMode": "none",
+            "textMode": "value_and_name",
+            "wideLayout": true,
+            "orientation": "horizontal",
+            "showPercentChange": false
           }
         },
         {
           "id": 9,
           "type": "bargauge",
           "title": "Resource usage",
-          "description": "Based on requests",
+          "description": "CPU and memory utilization as a percentage of requested resources.",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource_mimir}"
@@ -598,7 +753,7 @@ spec:
             "h": 6,
             "w": 12,
             "x": 0,
-            "y": 38
+            "y": 39
           },
           "targets": [
             {
@@ -608,7 +763,7 @@ spec:
               },
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m])) / clamp_min(sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}), 1e-9)",
               "refId": "A",
-              "legendFormat": "__auto",
+              "legendFormat": "CPU usage %",
               "range": true
             },
             {
@@ -618,7 +773,7 @@ spec:
               },
               "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"}) / clamp_min(sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"}), 1)",
               "refId": "B",
-              "legendFormat": "__auto",
+              "legendFormat": "Memory usage %",
               "range": true
             }
           ],
@@ -628,6 +783,9 @@ spec:
                 "mode": "thresholds"
               },
               "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "decimals": 1,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -636,22 +794,80 @@ spec:
                     "value": null
                   },
                   {
+                    "color": "yellow",
+                    "value": 0.7
+                  },
+                  {
                     "color": "red",
-                    "value": 0.8
+                    "value": 0.85
                   }
                 ]
               }
-            }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "CPU usage %"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "CPU usage %"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Memory usage %"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Memory usage %"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/Value #A/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "CPU usage %"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byRegexp",
+                  "options": "/Value #B/"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Memory usage %"
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "displayMode": "gradient",
             "orientation": "horizontal",
+            "namePlacement": "left",
             "reduceOptions": {
               "calcs": [
                 "lastNotNull"
-              ]
+              ],
+              "fields": "",
+              "values": false
             },
-            "showUnfilled": true
+            "showUnfilled": true,
+            "valueMode": "color"
           }
         },
         {
@@ -3414,6 +3630,6 @@ spec:
       "title": "D1C K8S Workloads",
       "description": "Kubernetes workload health dashboard covering namespaces, pods, deployments, statefulsets, daemonsets, jobs, PV/PVC, Helm apps, HPA, services, and resource quotas.",
       "uid": "d1c-k8s-workloads",
-      "version": 9,
+      "version": 10,
       "id": null
     }
