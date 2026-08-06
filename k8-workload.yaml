@@ -1,0 +1,3419 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-workloads-dashboard
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: k8s-workloads-dashboard
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+  folder: LGTM
+  json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "name": "Prometheus Alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "red",
+            "expr": "ALERTS{alertstate=\"firing\", alertname=~\"Kube.*|.*Pod.*|.*Deployment.*|.*StatefulSet.*|.*DaemonSet.*|.*PVC.*|.*PV.*\"}",
+            "tagKeys": "alertname,severity",
+            "titleFormat": "{{alertname}}",
+            "textFormat": "{{annotations.summary}}",
+            "useValueForTime": false
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "liveNow": false,
+      "panels": [
+        {
+          "id": 17,
+          "type": "row",
+          "title": "Failed pod visibility",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "Failed phase pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 1
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod) (kube_pod_status_phase{phase=\"Failed\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "{{namespace}}/{{pod}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 15,
+          "type": "timeseries",
+          "title": "Pending phase pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 1
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod) (kube_pod_status_phase{phase=\"Pending\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "{{namespace}}/{{pod}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "CrashLoopBackOff containers",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod, container) (kube_pod_container_status_waiting_reason{reason=\"CrashLoopBackOff\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "OOMKilled containers",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod, container) (kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Restart spikes",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 15
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod, container) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[1h]))",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 18,
+          "type": "row",
+          "title": "Resource Utilization",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 22
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Memory usage by pod",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 23
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\"})",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "CPU usage by pod",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 23
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 8,
+          "type": "stat",
+          "title": "Memory Info",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 31
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace) (container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"})",
+              "refId": "A",
+              "legendFormat": "Usage",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace) (kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "refId": "B",
+              "legendFormat": "Requests",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace) (kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "refId": "C",
+              "legendFormat": "Limits",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "value",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 7,
+          "type": "stat",
+          "title": "CPU Info",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 31
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "Usage",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace) (kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\", pod=~\"$pod\"})",
+              "refId": "B",
+              "legendFormat": "Requests",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by(namespace) (kube_pod_container_resource_limits{resource=\"cpu\", namespace=~\"$namespace\", pod=~\"$pod\"})",
+              "refId": "C",
+              "legendFormat": "Limits",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "value",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 9,
+          "type": "bargauge",
+          "title": "Resource usage",
+          "description": "Based on requests",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 0,
+            "y": 38
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\"}[5m])) / clamp_min(sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}), 1e-9)",
+              "refId": "A",
+              "legendFormat": "__auto",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"}) / clamp_min(sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"}), 1)",
+              "refId": "B",
+              "legendFormat": "__auto",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.8
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 16,
+          "type": "stat",
+          "title": "Pod uptime",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 12,
+            "x": 12,
+            "y": 38
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "max(time() - kube_pod_start_time{namespace=~\"$namespace\", pod=~\"$pod\"})",
+              "refId": "A",
+              "legendFormat": "Pod uptime",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "s"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 19,
+          "type": "row",
+          "title": "Cluster level metrics",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 44
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 10,
+          "type": "stat",
+          "title": "Total nodes in cluster",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 45
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count(kube_node_info)",
+              "refId": "A",
+              "legendFormat": "Total nodes in cluster",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Node Ready status",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 45
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_node_status_condition{condition=\"Ready\", status=\"true\"}",
+              "refId": "A",
+              "legendFormat": "{{node}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 12,
+          "type": "bargauge",
+          "title": "Total allocatable resources",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 45
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_node_status_allocatable{resource=\"cpu\"})",
+              "refId": "A",
+              "legendFormat": "CPU",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_node_status_allocatable{resource=\"memory\"})",
+              "refId": "B",
+              "legendFormat": "Memory",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "displayMode": "basic",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 20,
+          "type": "row",
+          "title": "Workload metrics",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 52
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 13,
+          "type": "table",
+          "title": "Deployment replicas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 53
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_deployment_spec_replicas{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "desired",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_deployment_status_replicas_available{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "available",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_deployment_status_replicas_unavailable{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "unavailable",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "deployment",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "type": "bargauge",
+          "title": "Pod distribution by node",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 53
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (node) (kube_pod_info{namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "{{node}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 21,
+          "type": "row",
+          "title": "Namespaces & Cluster Workloads",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 61
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 22,
+          "type": "stat",
+          "title": "Total Namespaces",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 62
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count(count by (namespace) (kube_namespace_status_phase{phase=\"Active\"}))",
+              "refId": "A",
+              "legendFormat": "Total Namespaces",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 23,
+          "type": "stat",
+          "title": "Total Pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 4,
+            "y": 62
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_pod_info{namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "Total Pods",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 24,
+          "type": "stat",
+          "title": "Running Pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 62
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "Running Pods",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 25,
+          "type": "stat",
+          "title": "Failed Pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 12,
+            "y": 62
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_pod_status_phase{phase=\"Failed\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "Failed Pods",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 26,
+          "type": "stat",
+          "title": "Pending Pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 16,
+            "y": 62
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_pod_status_phase{phase=\"Pending\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "Pending Pods",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 27,
+          "type": "stat",
+          "title": "Not Ready Pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 62
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_pod_status_ready{condition=\"true\", namespace=~\"$namespace\"} == 0)",
+              "refId": "A",
+              "legendFormat": "Not Ready Pods",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 28,
+          "type": "timeseries",
+          "title": "Pods by Phase",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 67
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (phase) (kube_pod_status_phase{namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "{{phase}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 29,
+          "type": "timeseries",
+          "title": "Pods per Namespace",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 67
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count by (namespace) (kube_pod_info{namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 30,
+          "type": "row",
+          "title": "Deployments / StatefulSets / DaemonSets",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 74
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 31,
+          "type": "table",
+          "title": "StatefulSet Replicas Health",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 75
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_statefulset_replicas{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "desired",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_statefulset_status_replicas_ready{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "ready",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_statefulset_status_replicas_current{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "current",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "statefulset",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 32,
+          "type": "table",
+          "title": "DaemonSet Scheduling Health",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 75
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_daemonset_status_desired_number_scheduled{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "desired",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_daemonset_status_number_ready{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "ready",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_daemonset_status_number_available{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "available",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_daemonset_status_number_misscheduled{namespace=~\"$namespace\"}",
+              "refId": "D",
+              "legendFormat": "misscheduled",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "daemonset",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 33,
+          "type": "table",
+          "title": "ReplicaSet Replicas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 83
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_replicaset_spec_replicas{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "desired",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_replicaset_status_ready_replicas{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "ready",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_replicaset_status_fully_labeled_replicas{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "labeled",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "replicaset",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 34,
+          "type": "row",
+          "title": "Jobs & CronJobs",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 91
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 35,
+          "type": "stat",
+          "title": "Active Jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 0,
+            "y": 92
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_job_status_active{namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "Active Jobs",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 36,
+          "type": "stat",
+          "title": "Succeeded Jobs (1h)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 6,
+            "y": 92
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(increase(kube_job_status_succeeded{namespace=~\"$namespace\"}[1h]))",
+              "refId": "A",
+              "legendFormat": "Succeeded Jobs (1h)",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 37,
+          "type": "stat",
+          "title": "Failed Jobs (1h)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 12,
+            "y": 92
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(increase(kube_job_status_failed{namespace=~\"$namespace\"}[1h]))",
+              "refId": "A",
+              "legendFormat": "Failed Jobs (1h)",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 38,
+          "type": "stat",
+          "title": "Active CronJobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 18,
+            "y": 92
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_cronjob_status_active{namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "Active CronJobs",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 39,
+          "type": "table",
+          "title": "Job Status",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 97
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_job_status_active{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "active",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_job_status_succeeded{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "succeeded",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_job_status_failed{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "failed",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_job_spec_completions{namespace=~\"$namespace\"}",
+              "refId": "D",
+              "legendFormat": "completions",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "job_name",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 40,
+          "type": "row",
+          "title": "Persistent Volumes & Claims",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 105
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 41,
+          "type": "stat",
+          "title": "PV Bound",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 106
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_persistentvolume_status_phase{phase=\"Bound\"} == 1)",
+              "refId": "A",
+              "legendFormat": "PV Bound",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 42,
+          "type": "stat",
+          "title": "PV Available",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 4,
+            "y": 106
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_persistentvolume_status_phase{phase=\"Available\"} == 1)",
+              "refId": "A",
+              "legendFormat": "PV Available",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 43,
+          "type": "stat",
+          "title": "PV Failed",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 106
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_persistentvolume_status_phase{phase=\"Failed\"} == 1)",
+              "refId": "A",
+              "legendFormat": "PV Failed",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 44,
+          "type": "stat",
+          "title": "PVC Bound",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 12,
+            "y": 106
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_persistentvolumeclaim_status_phase{phase=\"Bound\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "PVC Bound",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 45,
+          "type": "stat",
+          "title": "PVC Pending",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 16,
+            "y": 106
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_persistentvolumeclaim_status_phase{phase=\"Pending\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "PVC Pending",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 46,
+          "type": "stat",
+          "title": "PVC Lost",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 106
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(kube_persistentvolumeclaim_status_phase{phase=\"Lost\", namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "PVC Lost",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 47,
+          "type": "table",
+          "title": "PV Inventory",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 111
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_persistentvolume_info",
+              "refId": "A",
+              "legendFormat": "info",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_persistentvolume_status_phase",
+              "refId": "B",
+              "legendFormat": "phase",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_persistentvolume_capacity_bytes",
+              "refId": "C",
+              "legendFormat": "capacity",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "persistentvolume",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 48,
+          "type": "table",
+          "title": "PVC Inventory",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 111
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_persistentvolumeclaim_info{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "info",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_persistentvolumeclaim_status_phase{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "phase",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_persistentvolumeclaim_resource_requests_storage_bytes{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "requested",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "persistentvolumeclaim",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 49,
+          "type": "timeseries",
+          "title": "PVC Volume Usage %",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 119
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "100 * sum by (namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=~\"$namespace\"}) / clamp_min(sum by (namespace, persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=~\"$namespace\"}), 1)",
+              "refId": "A",
+              "legendFormat": "{{namespace}}/{{persistentvolumeclaim}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 50,
+          "type": "row",
+          "title": "Helm Applications",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 127
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 51,
+          "type": "stat",
+          "title": "Helm Managed Workloads",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 128
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count(count by (namespace, label_helm_sh_chart) (kube_pod_labels{label_app_kubernetes_io_managed_by=\"Helm\", namespace=~\"$namespace\"}))",
+              "refId": "A",
+              "legendFormat": "Helm Managed Workloads",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 52,
+          "type": "stat",
+          "title": "Helm Releases (chart)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 8,
+            "y": 128
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count(count by (label_helm_sh_chart) (kube_pod_labels{label_helm_sh_chart!=\"\", namespace=~\"$namespace\"}))",
+              "refId": "A",
+              "legendFormat": "Helm Releases (chart)",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 53,
+          "type": "stat",
+          "title": "Helm Releases (instance)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 16,
+            "y": 128
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count(count by (label_app_kubernetes_io_instance) (kube_pod_labels{label_app_kubernetes_io_managed_by=\"Helm\", namespace=~\"$namespace\"}))",
+              "refId": "A",
+              "legendFormat": "Helm Releases (instance)",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 54,
+          "type": "table",
+          "title": "Helm Release Inventory",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 133
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count by (namespace, label_helm_sh_chart, label_app_kubernetes_io_instance, label_app_kubernetes_io_name) (kube_pod_labels{label_app_kubernetes_io_managed_by=\"Helm\", namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "pods",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 55,
+          "type": "row",
+          "title": "HPA, Services & Ingress",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 141
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 56,
+          "type": "table",
+          "title": "HPA Replica Status",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 142
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_horizontalpodautoscaler_spec_min_replicas{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "min",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_horizontalpodautoscaler_spec_max_replicas{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "max",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "current",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=~\"$namespace\"}",
+              "refId": "D",
+              "legendFormat": "desired",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "horizontalpodautoscaler",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 57,
+          "type": "table",
+          "title": "Service Endpoints",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 142
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_service_info{namespace=~\"$namespace\"}",
+              "refId": "A",
+              "legendFormat": "info",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_endpoint_address_available{namespace=~\"$namespace\"}",
+              "refId": "B",
+              "legendFormat": "available",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_endpoint_address_not_ready{namespace=~\"$namespace\"}",
+              "refId": "C",
+              "legendFormat": "not_ready",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "service",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 58,
+          "type": "timeseries",
+          "title": "Ingress Paths",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 150
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (namespace, ingress) (kube_ingress_path{namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "{{namespace}}/{{ingress}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 59,
+          "type": "timeseries",
+          "title": "Container Waiting Reasons",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 150
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (reason) (kube_pod_container_status_waiting_reason{namespace=~\"$namespace\"} == 1)",
+              "refId": "A",
+              "legendFormat": "{{reason}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 60,
+          "type": "row",
+          "title": "Resource Quotas & Limits",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 157
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 61,
+          "type": "timeseries",
+          "title": "Namespace CPU Requests",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 0,
+            "y": 158
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (namespace) (kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 62,
+          "type": "timeseries",
+          "title": "Namespace Memory Requests",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 12,
+            "x": 12,
+            "y": 158
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (namespace) (kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"})",
+              "refId": "A",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 63,
+          "type": "table",
+          "title": "Resource Quota Usage",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 165
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_resourcequota{namespace=~\"$namespace\", type=\"used\"}",
+              "refId": "A",
+              "legendFormat": "used",
+              "range": false,
+              "format": "table",
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "kube_resourcequota{namespace=~\"$namespace\", type=\"hard\"}",
+              "refId": "B",
+              "legendFormat": "hard",
+              "range": false,
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "resource",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        }
+      ],
+      "preload": false,
+      "refresh": "30s",
+      "schemaVersion": 42,
+      "tags": [
+        "d1c",
+        "kubernetes",
+        "workloads",
+        "k8s",
+        "helm"
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "label": "Datasource"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "definition": "label_values(kube_namespace_status_phase,namespace)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Namespace",
+            "multi": true,
+            "name": "namespace",
+            "query": "label_values(kube_namespace_status_phase,namespace)",
+            "refresh": 2,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "definition": "label_values(kube_pod_info{namespace=~\"$namespace\"},pod)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Pod",
+            "multi": true,
+            "name": "pod",
+            "query": "label_values(kube_pod_info{namespace=~\"$namespace\"},pod)",
+            "refresh": 2,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "definition": "label_values(kube_pod_labels{namespace=~\"$namespace\", label_app_kubernetes_io_managed_by=\"Helm\"}, label_helm_sh_chart)",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Helm Chart",
+            "multi": true,
+            "name": "helm_chart",
+            "query": "label_values(kube_pod_labels{namespace=~\"$namespace\", label_app_kubernetes_io_managed_by=\"Helm\"}, label_helm_sh_chart)",
+            "refresh": 2,
+            "type": "query"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "5s",
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "2h",
+          "1d"
+        ]
+      },
+      "timezone": "browser",
+      "title": "D1C K8S Workloads",
+      "description": "Kubernetes workload health dashboard covering namespaces, pods, deployments, statefulsets, daemonsets, jobs, PV/PVC, Helm apps, HPA, services, and resource quotas.",
+      "uid": "d1c-k8s-workloads",
+      "version": 9,
+      "id": null
+    }
