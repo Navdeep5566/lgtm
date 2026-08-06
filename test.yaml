@@ -138,7 +138,7 @@ spec:
             "datasource": {
               "uid": "${datasource_mimir}"
             },
-            "query": "label_values(system_disk_io{host_name=~\"$node\"}, device)",
+            "query": "label_values(system_disk_io, device)",
             "multi": true,
             "includeAll": true,
             "allValue": ".*",
@@ -156,7 +156,7 @@ spec:
             "datasource": {
               "uid": "${datasource_mimir}"
             },
-            "query": "label_values(system_filesystem_usage{host_name=~\"$node\"}, mountpoint)",
+            "query": "label_values(system_filesystem_utilization, mountpoint)",
             "multi": true,
             "includeAll": true,
             "allValue": ".*",
@@ -1192,12 +1192,12 @@ spec:
           },
           "targets": [
             {
-              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"read\", host_name=~\"$node\"}[$__interval])",
+              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"read\"}[5m])",
               "legendFormat": "Read {{device}}",
               "refId": "A"
             },
             {
-              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"write\", host_name=~\"$node\"}[$__interval])",
+              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"write\"}[5m])",
               "legendFormat": "Write {{device}}",
               "refId": "B"
             }
@@ -1242,12 +1242,12 @@ spec:
           },
           "targets": [
             {
-              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"read\", host_name=~\"$node\"}[$__interval])",
+              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"read\"}[5m])",
               "legendFormat": "Read ops {{device}}",
               "refId": "A"
             },
             {
-              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"write\", host_name=~\"$node\"}[$__interval])",
+              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"write\"}[5m])",
               "legendFormat": "Write ops {{device}}",
               "refId": "B"
             }
@@ -1292,12 +1292,12 @@ spec:
           },
           "targets": [
             {
-              "expr": "rate(system_disk_io_time{device=~\"$disk\", host_name=~\"$node\"}[$__interval])",
+              "expr": "rate(system_disk_io_time{device=~\"$disk\"}[5m])",
               "legendFormat": "I/O time {{device}}",
               "refId": "A"
             },
             {
-              "expr": "rate(system_disk_operation_time{device=~\"$disk\", direction=~\"read|write\", host_name=~\"$node\"}[$__interval])",
+              "expr": "rate(system_disk_operation_time{device=~\"$disk\", direction=~\"read|write\"}[5m])",
               "legendFormat": "Op time {{direction}} {{device}}",
               "refId": "B"
             }
@@ -1342,7 +1342,7 @@ spec:
           },
           "targets": [
             {
-              "expr": "system_disk_pending_operations{device=~\"$disk\", host_name=~\"$node\"}",
+              "expr": "system_disk_pending_operations{device=~\"$disk\"}",
               "legendFormat": "Pending {{device}}",
               "refId": "A"
             }
@@ -1420,9 +1420,15 @@ spec:
           },
           "targets": [
             {
-              "expr": "100 * sum(system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum(system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
+              "expr": "100 * avg(system_filesystem_utilization{mountpoint=~\"$mountpoint\"})",
               "refId": "A",
               "legendFormat": "FS Util %"
+            },
+            {
+              "expr": "100 * sum(system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\"}) / clamp_min(sum(system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\"}), 1)",
+              "refId": "B",
+              "legendFormat": "FS Util % (from usage)",
+              "hide": true
             }
           ],
           "fieldConfig": {
@@ -1476,7 +1482,7 @@ spec:
           },
           "targets": [
             {
-              "expr": "sum(system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "expr": "sum(system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\"})",
               "refId": "A",
               "legendFormat": "Used"
             }
@@ -1526,7 +1532,7 @@ spec:
           },
           "targets": [
             {
-              "expr": "sum(system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "expr": "sum(system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\"})",
               "refId": "A",
               "legendFormat": "Free"
             }
@@ -1580,8 +1586,8 @@ spec:
           },
           "targets": [
             {
-              "expr": "sum by (mountpoint, host_name) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
-              "legendFormat": "{{host_name}} {{mountpoint}}",
+              "expr": "sum by (mountpoint) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\"})",
+              "legendFormat": "{{mountpoint}}",
               "refId": "A"
             }
           ],
@@ -2003,7 +2009,7 @@ spec:
           "id": 31,
           "type": "piechart",
           "title": "Process Breakdown",
-          "description": "Top processes by CPU time over the selected range, with remaining processes rolled into Other. Matches standard infrastructure process breakdown views.",
+          "description": "Top processes by CPU time (donut). Uses process_cpu_time from the OTel process scraper. Falls back to process status counts if per-process metrics are unavailable.",
           "gridPos": {
             "h": 12,
             "w": 12,
@@ -2015,16 +2021,30 @@ spec:
           },
           "targets": [
             {
-              "expr": "topk(7, sum by (process_executable_name) (increase(process_cpu_time{host_name=~\"$node\"}[$__range])))",
+              "expr": "topk(7, sum by (process_executable_name) (rate(process_cpu_time[5m])))",
               "legendFormat": "{{process_executable_name}}",
               "refId": "A",
               "instant": true
             },
             {
-              "expr": "label_replace((sum(increase(process_cpu_time{host_name=~\"$node\"}[$__range])) - sum(topk(7, sum by (process_executable_name) (increase(process_cpu_time{host_name=~\"$node\"}[$__range]))))) > 0, \"process_executable_name\", \"Other\", \"\", \"\")",
+              "expr": "label_replace((sum(rate(process_cpu_time[5m])) - sum(topk(7, sum by (process_executable_name) (rate(process_cpu_time[5m]))))) > 0, \"process_executable_name\", \"Other\", \"\", \"\")",
               "legendFormat": "Other",
               "refId": "B",
               "instant": true
+            },
+            {
+              "expr": "topk(7, sum by (process_command) (rate(process_cpu_time[5m])))",
+              "legendFormat": "{{process_command}}",
+              "refId": "C",
+              "instant": true,
+              "hide": true
+            },
+            {
+              "expr": "sum by (status) (system_processes_count)",
+              "legendFormat": "{{status}}",
+              "refId": "D",
+              "instant": true,
+              "hide": true
             }
           ],
           "fieldConfig": {
@@ -2079,7 +2099,7 @@ spec:
           },
           "targets": [
             {
-              "expr": "topk(5, 100 * (1 - (sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))))",
+              "expr": "topk(5, 100 * (1 - (sum by (host_name) (rate(system_cpu_time{state=\"idle\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time[5m])), 1e-9))))",
               "legendFormat": "{{host_name}}",
               "refId": "A"
             }
@@ -2134,7 +2154,7 @@ spec:
           "id": 33,
           "type": "timeseries",
           "title": "Top Processes by CPU",
-          "description": "Top 10 process executables by CPU usage rate. Useful for spotting runaway processes during onboarding.",
+          "description": "Top 10 process executables by CPU usage rate (requires OTel process scraper).",
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -2146,9 +2166,15 @@ spec:
           },
           "targets": [
             {
-              "expr": "topk(10, sum by (process_executable_name) (rate(process_cpu_time{host_name=~\"$node\"}[$__interval])))",
+              "expr": "topk(10, sum by (process_executable_name) (rate(process_cpu_time[5m])))",
               "legendFormat": "{{process_executable_name}}",
               "refId": "A"
+            },
+            {
+              "expr": "topk(10, sum by (process_command) (rate(process_cpu_time[5m])))",
+              "legendFormat": "{{process_command}}",
+              "refId": "B",
+              "hide": true
             }
           ],
           "fieldConfig": {
@@ -2179,7 +2205,7 @@ spec:
           "id": 34,
           "type": "timeseries",
           "title": "Top Processes by Memory",
-          "description": "Top 10 process executables by resident memory usage.",
+          "description": "Top 10 process executables by resident memory usage (requires OTel process scraper).",
           "gridPos": {
             "h": 8,
             "w": 12,
@@ -2191,9 +2217,15 @@ spec:
           },
           "targets": [
             {
-              "expr": "topk(10, sum by (process_executable_name) (process_memory_usage{host_name=~\"$node\"}))",
+              "expr": "topk(10, sum by (process_executable_name) (process_memory_usage))",
               "legendFormat": "{{process_executable_name}}",
               "refId": "A"
+            },
+            {
+              "expr": "topk(10, sum by (process_command) (process_memory_usage))",
+              "legendFormat": "{{process_command}}",
+              "refId": "B",
+              "hide": true
             }
           ],
           "fieldConfig": {
@@ -2221,6 +2253,100 @@ spec:
           }
         },
         {
+          "id": 45,
+          "type": "piechart",
+          "title": "Process Status Breakdown",
+          "description": "Process counts by kernel status (running/sleeping/stopped/zombies). Works with the processes scraper when per-process metrics are not enabled.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 132
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (status) (system_processes_count)",
+              "legendFormat": "{{status}}",
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": ["lastNotNull"],
+              "fields": ""
+            },
+            "pieType": "donut",
+            "tooltip": {
+              "mode": "single",
+              "sort": "desc"
+            },
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "values": ["value", "percent"]
+            },
+            "displayLabels": ["percent"]
+          }
+        },
+        {
+          "id": 46,
+          "type": "timeseries",
+          "title": "Processes Created / sec",
+          "description": "Rate of new processes created. Spikes often indicate fork bombs or restart loops.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 132
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(system_processes_created[5m]))",
+              "legendFormat": "created/s",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "ops"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["last", "mean", "max"]
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          }
+        },
+        {
           "id": 208,
           "type": "row",
           "title": "📡 Host Network & Disk Space",
@@ -2228,7 +2354,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 132
+            "y": 140
           },
           "collapsed": false,
           "panels": []
@@ -2242,14 +2368,14 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 133
+            "y": 141
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (host_name) (rate(system_network_io{direction=\"transmit\", device=~\"$device\", host_name=~\"$node\"}[$__interval]))",
+              "expr": "sum by (host_name) (rate(system_network_io{direction=\"transmit\", device=~\"$device\"}[5m]))",
               "legendFormat": "{{host_name}}",
               "refId": "A"
             }
@@ -2287,14 +2413,14 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 133
+            "y": 141
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (host_name) (rate(system_network_io{direction=\"receive\", device=~\"$device\", host_name=~\"$node\"}[$__interval]))",
+              "expr": "sum by (host_name) (rate(system_network_io{direction=\"receive\", device=~\"$device\"}[5m]))",
               "legendFormat": "{{host_name}}",
               "refId": "A"
             }
@@ -2327,22 +2453,29 @@ spec:
           "id": 37,
           "type": "bargauge",
           "title": "Disk Space Used % by Mountpoint",
-          "description": "Per-mountpoint disk space utilization. Critical for disk-full prevention during onboarding and ops.",
+          "description": "Per-mountpoint disk space utilization using system_filesystem_utilization (enabled in hostmetrics).",
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 141
+            "y": 149
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "100 * sum by (mountpoint, host_name) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum by (mountpoint, host_name) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
-              "legendFormat": "{{host_name}}:{{mountpoint}}",
+              "expr": "100 * system_filesystem_utilization{mountpoint=~\"$mountpoint\"}",
+              "legendFormat": "{{mountpoint}}",
               "refId": "A",
               "instant": true
+            },
+            {
+              "expr": "100 * sum by (mountpoint) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\"}) / clamp_min(sum by (mountpoint) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\"}), 1)",
+              "legendFormat": "{{mountpoint}}",
+              "refId": "B",
+              "instant": true,
+              "hide": true
             }
           ],
           "fieldConfig": {
@@ -2391,42 +2524,35 @@ spec:
           "id": 38,
           "type": "table",
           "title": "Disk Space Inventory",
-          "description": "Per-mountpoint used, free, and total disk space with utilization %. Primary disk-space view for node health onboarding.",
+          "description": "Per-mountpoint used, free, and utilization. Uses filesystem utilization + usage metrics.",
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 141
+            "y": 149
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
-              "legendFormat": "used",
+              "expr": "100 * system_filesystem_utilization{mountpoint=~\"$mountpoint\"}",
+              "legendFormat": "__auto",
               "refId": "A",
               "format": "table",
               "instant": true
             },
             {
-              "expr": "sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
-              "legendFormat": "free",
+              "expr": "system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\"}",
+              "legendFormat": "__auto",
               "refId": "B",
               "format": "table",
               "instant": true
             },
             {
-              "expr": "sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
-              "legendFormat": "total",
+              "expr": "system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\"}",
+              "legendFormat": "__auto",
               "refId": "C",
-              "format": "table",
-              "instant": true
-            },
-            {
-              "expr": "100 * sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
-              "legendFormat": "used_pct",
-              "refId": "D",
               "format": "table",
               "instant": true
             }
@@ -2446,54 +2572,6 @@ spec:
                 "matcher": {
                   "id": "byName",
                   "options": "Value #A"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "Used"
-                  },
-                  {
-                    "id": "unit",
-                    "value": "bytes"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "Value #B"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "Free"
-                  },
-                  {
-                    "id": "unit",
-                    "value": "bytes"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "Value #C"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "Total"
-                  },
-                  {
-                    "id": "unit",
-                    "value": "bytes"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "Value #D"
                 },
                 "properties": [
                   {
@@ -2539,6 +2617,38 @@ spec:
                     }
                   }
                 ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Used"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Free"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
               }
             ]
           },
@@ -2567,23 +2677,14 @@ spec:
                   "Time #A": true,
                   "Time #B": true,
                   "Time #C": true,
-                  "Time #D": true
-                },
-                "indexByName": {
-                  "host_name": 0,
-                  "mountpoint": 1,
-                  "device": 2,
-                  "type": 3,
-                  "Value #A": 4,
-                  "Value #B": 5,
-                  "Value #C": 6,
-                  "Value #D": 7
+                  "state": true,
+                  "__name__": true
                 },
                 "renameByName": {
-                  "host_name": "Host",
                   "mountpoint": "Mountpoint",
                   "device": "Device",
-                  "type": "FS Type"
+                  "type": "FS Type",
+                  "host_name": "Host"
                 }
               }
             }
@@ -2598,15 +2699,15 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 149
+            "y": 157
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (host_name, mountpoint) (system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
-              "legendFormat": "{{host_name}} {{mountpoint}}",
+              "expr": "sum by (mountpoint) (system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\"})",
+              "legendFormat": "{{mountpoint}}",
               "refId": "A"
             }
           ],
@@ -2638,21 +2739,27 @@ spec:
           "id": 40,
           "type": "timeseries",
           "title": "Filesystem Inodes Usage",
-          "description": "Inode usage by mountpoint. Disk can fill on inodes even when bytes remain free.",
+          "description": "Inode usage % by mountpoint. Falls back to reserved/used ratio from inodes usage metric.",
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 149
+            "y": 157
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "100 * sum by (host_name, mountpoint) (system_filesystem_inodes_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum by (host_name, mountpoint) (system_filesystem_inodes_usage{state=~\"used|free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
-              "legendFormat": "{{host_name}} {{mountpoint}}",
+              "expr": "100 * sum by (mountpoint) (system_filesystem_inodes_usage{state=\"used\", mountpoint=~\"$mountpoint\"}) / clamp_min(sum by (mountpoint) (system_filesystem_inodes_usage{state=~\"used|free\", mountpoint=~\"$mountpoint\"}), 1)",
+              "legendFormat": "{{mountpoint}}",
               "refId": "A"
+            },
+            {
+              "expr": "100 * system_filesystem_utilization{mountpoint=~\"$mountpoint\"}",
+              "legendFormat": "{{mountpoint}} (bytes util fallback)",
+              "refId": "B",
+              "hide": true
             }
           ],
           "fieldConfig": {
@@ -2709,7 +2816,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 157
+            "y": 165
           },
           "collapsed": false,
           "panels": []
@@ -2723,7 +2830,7 @@ spec:
             "h": 5,
             "w": 6,
             "x": 0,
-            "y": 158
+            "y": 166
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -2773,14 +2880,14 @@ spec:
             "h": 5,
             "w": 6,
             "x": 6,
-            "y": 158
+            "y": 166
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"} == 0) or vector(0)",
+              "expr": "count(kube_node_status_condition{condition=\"Ready\", status=\"false\"} == 1) or vector(0)",
               "refId": "A",
               "legendFormat": "Not Ready"
             }
@@ -2823,7 +2930,7 @@ spec:
             "h": 5,
             "w": 6,
             "x": 12,
-            "y": 158
+            "y": 166
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -2873,7 +2980,7 @@ spec:
             "h": 5,
             "w": 6,
             "x": 18,
-            "y": 158
+            "y": 166
           },
           "datasource": {
             "uid": "${datasource_mimir}"
