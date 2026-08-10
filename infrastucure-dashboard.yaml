@@ -1,0 +1,2127 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+
+metadata:
+  name: d1c-infrastructure-node-health-v2
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: d1c-infrastructure-node-health-v2
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+
+  folder: LGTM
+
+  json: |
+    {
+      "id": null,
+      "uid": "d1c-infra-health-v2",
+      "title": "D1C App - Infrastructure & Node Health v2",
+      "description": "Host-level metrics including CPU, memory, disk I/O, network, paging, and process health for the D1C Banking Application infrastructure",
+      "tags": [
+        "d1c",
+        "sre",
+        "opentelemetry",
+        "kubernetes",
+        "node-health"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 2,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "fiscalYearStartMonth": 0,
+      "liveNow": false,
+      "weekStart": "",
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "name": "Prometheus Alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "red",
+            "expr": "ALERTS{alertstate=\"firing\", alertname=~\".*[Nn]ode.*|.*[Mm]emory.*|.*[Cc]PU.*|.*[Dd]isk.*\"}",
+            "tagKeys": "alertname,severity,severity",
+            "titleFormat": "{{alertname}}",
+            "textFormat": "{{annotations.summary}}",
+            "useValueForTime": false
+          },
+          {
+            "name": "Node Not Ready",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "orange",
+            "expr": "kube_node_status_condition{condition=\"Ready\", status=\"true\"} == 0",
+            "tagKeys": "node",
+            "titleFormat": "Node Not Ready: {{node}}",
+            "textFormat": "Kubernetes node {{node}} is not Ready",
+            "useValueForTime": false
+          }
+        ]
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "label": "Mimir Datasource"
+          },
+          {
+            "name": "cpu",
+            "type": "custom",
+            "query": "cpu0,cpu1,cpu2,cpu3,cpu4,cpu5,cpu6,cpu7",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "CPU"
+          },
+          {
+            "name": "device",
+            "type": "custom",
+            "query": "lo,eth0",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Network Device"
+          },
+          {
+            "name": "node",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(system_cpu_time, host_name)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Node"
+          },
+          {
+            "name": "disk",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(system_disk_io, device)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Disk Device",
+            "refresh": 2
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 200,
+          "type": "row",
+          "title": "🖥 CPU Overview",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 1,
+          "type": "gauge",
+          "title": "Overall CPU Utilization %",
+          "description": "Average CPU utilization across all cores (100% minus idle). Values above 85% indicate the node is under heavy load...",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - sum(rate(system_cpu_time{state=\"idle\",cpu=~\"$cpu\"}[5m])) / sum(rate(system_cpu_time{cpu=~\"$cpu\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "CPU Util %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 85
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 2,
+          "type": "gauge",
+          "title": "Memory Utilization %",
+          "description": "Percentage of total memory currently in use. Above 90% risks OOM kills on pods.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 6,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum(system_memory_usage{state=\"used\"}) / sum(system_memory_usage{state=~\"used|free|buffered|cached\"})",
+              "refId": "A",
+              "legendFormat": "Memory Util %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 75
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Total Memory Used",
+          "description": "Absolute amount of memory currently in use (bytes). Compare with total to assess headroom.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 12,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "system_memory_usage{state=\"used\"}",
+              "refId": "A",
+              "legendFormat": "Used"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 51539607552
+                  },
+                  {
+                    "color": "red",
+                    "value": 61917364224
+                  }
+                ]
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Total Memory Free",
+          "description": "Available free memory. If this drops below a few GB, the node is at risk of memory pressure.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 18,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "system_memory_usage{state=\"free\"}",
+              "refId": "A",
+              "legendFormat": "Free"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 4294967296
+                  },
+                  {
+                    "color": "green",
+                    "value": 8589934592
+                  }
+                ]
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "CPU Time per State",
+          "description": "Stacked view of CPU time breakdown by state (user/system/wait/steal/softirq). High 'steal' indicates noisy neighbor issues.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (state) (rate(system_cpu_time{cpu=~\"$cpu\", state=~\"user|system|wait|steal|softirq\"}[$__interval]))",
+              "legendFormat": "{{state}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 60,
+                "stacking": {
+                  "mode": "normal"
+                },
+                "lineInterpolation": "smooth"
+              },
+              "unit": "s"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "CPU Load Averages (1m / 5m / 15m)",
+          "description": "System load averages indicating run queue depth. Thresholds at 4.0 (warning) and 8.0 (critical) represent per-core limits.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "system_cpu_load_average_1m",
+              "legendFormat": "Load 1m",
+              "refId": "A"
+            },
+            {
+              "expr": "system_cpu_load_average_5m",
+              "legendFormat": "Load 5m",
+              "refId": "B"
+            },
+            {
+              "expr": "system_cpu_load_average_15m",
+              "legendFormat": "Load 15m",
+              "refId": "C"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "smooth",
+                "thresholdsStyle": {
+                  "mode": "dashed+area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 4
+                  },
+                  {
+                    "color": "red",
+                    "value": 8
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 201,
+          "type": "row",
+          "title": "🌐 Network",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 9
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Network I/O Throughput",
+          "description": "Bytes per second transmitted and received on the selected network device. Sustained high throughput may indicate bandwidth exhaustion.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 10
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_network_io{device=~\"$device\", direction=\"transmit\"}[$__interval])",
+              "legendFormat": "TX {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_network_io{device=~\"$device\", direction=\"receive\"}[$__interval])",
+              "legendFormat": "RX {{device}}",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "Bps"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Network Packets/sec",
+          "description": "Packet rate on network interfaces. Useful for detecting packet storms or DDoS-like patterns.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 10
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_network_packets{device=~\"$device\", direction=\"transmit\"}[$__interval])",
+              "legendFormat": "TX pkts {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_network_packets{device=~\"$device\", direction=\"receive\"}[$__interval])",
+              "legendFormat": "RX pkts {{device}}",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "pps"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "type": "stat",
+          "title": "Network Errors Total",
+          "description": "Total network errors (TX + RX) across all devices. Any non-zero value warrants investigation into NIC or driver health.",
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 10
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(system_network_errors)",
+              "refId": "A",
+              "legendFormat": "Errors"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 100
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 10,
+          "type": "stat",
+          "title": "Dropped Packets Total",
+          "description": "Total dropped packets across all interfaces. Drops indicate kernel buffer exhaustion or rate limiting.",
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 10
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(system_network_dropped)",
+              "refId": "A",
+              "legendFormat": "Dropped"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 11,
+          "type": "barchart",
+          "title": "TCP Connections by State",
+          "description": "Distribution of TCP connections across states. High TIME_WAIT may indicate connection churn.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 10
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "system_network_connections{protocol=\"tcp\"}",
+              "legendFormat": "{{state}}",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "orientation": "horizontal",
+            "showValue": "always",
+            "barWidth": 0.7
+          }
+        },
+        {
+          "id": 12,
+          "type": "timeseries",
+          "title": "TCP ESTABLISHED Connections Trend",
+          "description": "Trend of ESTABLISHED TCP connections over time. A sudden drop may indicate service degradation.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 10
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "system_network_connections{protocol=\"tcp\", state=\"ESTABLISHED\"}",
+              "legendFormat": "ESTABLISHED",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "blue"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          }
+        },
+        {
+          "id": 202,
+          "type": "row",
+          "title": "📑 Paging & Memory Pressure",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 18
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 13,
+          "type": "timeseries",
+          "title": "Page Faults Over Time",
+          "description": "Major vs minor page faults. Major faults require disk I/O and significantly impact performance.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 19
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_paging_faults{type=\"major\"}[$__interval])",
+              "legendFormat": "Major Faults",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_paging_faults{type=\"minor\"}[$__interval])",
+              "legendFormat": "Minor Faults",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Major Faults"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Minor Faults"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 14,
+          "type": "timeseries",
+          "title": "Paging Operations Rate",
+          "description": "Rate of paging operations (page_in and page_out) by type. High page_out rates indicate the system is actively swapping memory to disk.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 19
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_paging_operations{direction=\"page_in\", type=\"major\"}[$__interval])",
+              "legendFormat": "Page In (major)",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_paging_operations{direction=\"page_out\", type=\"major\"}[$__interval])",
+              "legendFormat": "Page Out (major)",
+              "refId": "B"
+            },
+            {
+              "expr": "rate(system_paging_operations{direction=\"page_in\", type=\"minor\"}[$__interval])",
+              "legendFormat": "Page In (minor)",
+              "refId": "C"
+            },
+            {
+              "expr": "rate(system_paging_operations{direction=\"page_out\", type=\"minor\"}[$__interval])",
+              "legendFormat": "Page Out (minor)",
+              "refId": "D"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "ops"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 203,
+          "type": "row",
+          "title": "📊 Per-CPU Breakdown",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 27
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 15,
+          "type": "table",
+          "title": "Per-CPU Utilization Breakdown",
+          "description": "Detailed per-CPU breakdown showing utilization by state. Red highlighting on steal% indicates noisy neighbor issues.",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 28
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (cpu) (rate(system_cpu_time{state=\"user\", cpu=~\"$cpu\"}[5m])) * 100",
+              "legendFormat": "{{cpu}}_user",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "avg by (cpu) (rate(system_cpu_time{state=\"system\", cpu=~\"$cpu\"}[5m])) * 100",
+              "legendFormat": "{{cpu}}_system",
+              "refId": "B",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "avg by (cpu) (rate(system_cpu_time{state=\"idle\", cpu=~\"$cpu\"}[5m])) * 100",
+              "legendFormat": "{{cpu}}_idle",
+              "refId": "C",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "avg by (cpu) (rate(system_cpu_time{state=\"wait\", cpu=~\"$cpu\"}[5m])) * 100",
+              "legendFormat": "{{cpu}}_wait",
+              "refId": "D",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "avg by (cpu) (rate(system_cpu_time{state=\"steal\", cpu=~\"$cpu\"}[5m])) * 100",
+              "legendFormat": "{{cpu}}_steal",
+              "refId": "E",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "unit": "percent",
+              "decimals": 2
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #E"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "steal%"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "yellow",
+                          "value": 2
+                        },
+                        {
+                          "color": "red",
+                          "value": 5
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "user%"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "system%"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "idle%"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #D"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "wait%"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "displayName": "cpu",
+                "desc": false
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            }
+          ]
+        },
+        {
+          "id": 204,
+          "type": "row",
+          "title": "💾 Disk I/O",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 38
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 16,
+          "type": "timeseries",
+          "title": "Disk I/O Throughput",
+          "description": "Bytes read/written per second by disk device. Sustained saturation may indicate storage bottleneck.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 39
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"read\"}[5m])",
+              "legendFormat": "Read {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"write\"}[5m])",
+              "legendFormat": "Write {{device}}",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "Bps"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 17,
+          "type": "timeseries",
+          "title": "Disk Operations/sec",
+          "description": "IOPS (read/write operations per second). High pending operations with low IOPS often signals disk saturation.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 39
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"read\"}[5m])",
+              "legendFormat": "Read ops {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"write\"}[5m])",
+              "legendFormat": "Write ops {{device}}",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "iops"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 18,
+          "type": "timeseries",
+          "title": "Disk I/O Time",
+          "description": "Time spent performing I/O. Rising I/O time with flat throughput indicates disk contention.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 39
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "rate(system_disk_io_time{device=~\"$disk\"}[5m])",
+              "legendFormat": "I/O time {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_disk_operation_time{device=~\"$disk\", direction=~\"read|write\"}[5m])",
+              "legendFormat": "Op time {{direction}} {{device}}",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "s"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 19,
+          "type": "timeseries",
+          "title": "Disk Pending Operations (Queue Depth)",
+          "description": "Number of pending disk operations. Sustained non-zero values indicate I/O saturation (USE method).",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 39
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "system_disk_pending_operations{device=~\"$disk\"}",
+              "legendFormat": "Pending {{device}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "thresholdsStyle": {
+                  "mode": "dashed+area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 16
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 206,
+          "type": "row",
+          "title": "🔄 Swap & System Health",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 47
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 24,
+          "type": "gauge",
+          "title": "Swap Utilization %",
+          "description": "Percentage of swap space in use. Sustained swap usage indicates memory pressure.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum(system_paging_usage{state=\"used\", host_name=~\"$node\"}) / clamp_min(sum(system_paging_usage{state=~\"used|free\", host_name=~\"$node\"}), 1)",
+              "refId": "A",
+              "legendFormat": "Swap Util %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 20
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 25,
+          "type": "stat",
+          "title": "System Uptime",
+          "description": "Node uptime in seconds. Unexpected resets appear as a drop in this value.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 6,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg(system_uptime{host_name=~\"$node\"})",
+              "refId": "A",
+              "legendFormat": "Uptime"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 3600
+                  },
+                  {
+                    "color": "green",
+                    "value": 86400
+                  }
+                ]
+              },
+              "unit": "dtdurations"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 26,
+          "type": "stat",
+          "title": "Running Processes",
+          "description": "Count of processes in running state. Sudden spikes may indicate runaway workloads.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 12,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(system_processes_count{status=\"running\", host_name=~\"$node\"})",
+              "refId": "A",
+              "legendFormat": "Running"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 50
+                  },
+                  {
+                    "color": "red",
+                    "value": 200
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 27,
+          "type": "stat",
+          "title": "Total Processes",
+          "description": "Total process count across all statuses on selected nodes.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 18,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(system_processes_count{host_name=~\"$node\"})",
+              "refId": "A",
+              "legendFormat": "Total"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1000
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 28,
+          "type": "timeseries",
+          "title": "Memory Usage by State",
+          "description": "Memory breakdown over time (used/free/buffered/cached). Growing 'used' with shrinking 'cached' often precedes OOM pressure.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (state) (system_memory_usage{state=~\"used|free|buffered|cached\", host_name=~\"$node\"})",
+              "legendFormat": "{{state}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 40,
+                "stacking": {
+                  "mode": "normal"
+                },
+                "lineInterpolation": "smooth"
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 29,
+          "type": "timeseries",
+          "title": "Swap Usage Over Time",
+          "description": "Swap (paging) usage by state. Non-zero used swap indicates the kernel is under memory pressure.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (state) (system_paging_usage{state=~\"used|free|cached\", host_name=~\"$node\"})",
+              "legendFormat": "{{state}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 30,
+                "stacking": {
+                  "mode": "normal"
+                },
+                "lineInterpolation": "smooth"
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 30,
+          "type": "timeseries",
+          "title": "Process Count by Status",
+          "description": "Process counts by status (running, sleeping, stopped, zombie). Rising zombies usually indicate application bugs.",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (status) (system_processes_count{host_name=~\"$node\"})",
+              "legendFormat": "{{status}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(system_processes_created{host_name=~\"$node\"}[$__interval])",
+              "legendFormat": "created/s",
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 32,
+          "type": "timeseries",
+          "title": "Top 5 CPU Average",
+          "description": "Top 5 hosts by average CPU utilization over the selected window.",
+          "gridPos": {
+            "h": 12,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(5, 100 * (1 - (sum by (host_name) (rate(system_cpu_time{state=\"idle\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time[5m])), 1e-9))))",
+              "legendFormat": "{{host_name}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "thresholdsStyle": {
+                  "mode": "dashed+area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 85
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 45,
+          "type": "piechart",
+          "title": "Process Status Breakdown",
+          "description": "Process counts by kernel status (running/sleeping/stopped/zombies). Works with the processes scraper when per-process metrics are not enabled.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (status) (system_processes_count)",
+              "legendFormat": "{{status}}",
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "pieType": "donut",
+            "tooltip": {
+              "mode": "single",
+              "sort": "desc"
+            },
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "values": [
+                "value",
+                "percent"
+              ]
+            },
+            "displayLabels": [
+              "percent"
+            ]
+          }
+        },
+        {
+          "id": 46,
+          "type": "timeseries",
+          "title": "Processes Created / sec",
+          "description": "Rate of new processes created. Spikes often indicate fork bombs or restart loops.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(system_processes_created[5m]))",
+              "legendFormat": "created/s",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "ops"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "single"
+            }
+          }
+        },
+        {
+          "id": 208,
+          "type": "row",
+          "title": "📡 Host Network",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 60
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 35,
+          "type": "timeseries",
+          "title": "MB/sec transmitted grouped by Hostname",
+          "description": "Network transmit throughput per host. Useful for comparing egress across nodes.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 61
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (host_name) (rate(system_network_io{direction=\"transmit\", device=~\"$device\"}[5m]))",
+              "legendFormat": "{{host_name}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "Bps"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 36,
+          "type": "timeseries",
+          "title": "MB/sec received grouped by Hostname",
+          "description": "Network receive throughput per host.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 61
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (host_name) (rate(system_network_io{direction=\"receive\", device=~\"$device\"}[5m]))",
+              "legendFormat": "{{host_name}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "Bps"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "last",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        }
+      ]
+    }
