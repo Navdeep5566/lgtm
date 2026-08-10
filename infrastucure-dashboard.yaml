@@ -1,38 +1,28 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
-
 metadata:
-  name: d1c-infrastructure-node-health-v2
+  name: d1c-infrastructure-node-health
   namespace: observability
   labels:
     dashboards: grafana-lgtm
-    app.kubernetes.io/name: d1c-infrastructure-node-health-v2
+    app.kubernetes.io/name: d1c-infrastructure-node-health
     app.kubernetes.io/component: grafana-dashboard
     app.kubernetes.io/part-of: lgtm-observability
-
 spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana-lgtm
-
   folder: LGTM
-
   json: |
     {
       "id": null,
-      "uid": "d1c-infra-health-v2",
-      "title": "D1C App - Infrastructure & Node Health v2",
-      "description": "Host-level metrics including CPU, memory, disk I/O, network, paging, and process health for the D1C Banking Application infrastructure",
-      "tags": [
-        "d1c",
-        "sre",
-        "opentelemetry",
-        "kubernetes",
-        "node-health"
-      ],
+      "uid": "d1c-infra-health",
+      "title": "D1C App - Infrastructure & Node Health",
+      "description": "Host-level metrics including CPU, memory, disk, filesystem, network, paging, and process health for the D1C Banking Application infrastructure",
+      "tags": ["d1c", "sre", "opentelemetry", "kubernetes", "node-health"],
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 2,
+      "version": 1,
       "refresh": "30s",
       "time": {
         "from": "now-1h",
@@ -148,7 +138,7 @@ spec:
             "datasource": {
               "uid": "${datasource_mimir}"
             },
-            "query": "label_values(system_disk_io, device)",
+            "query": "label_values(system_disk_io{host_name=~\"$node\"}, device)",
             "multi": true,
             "includeAll": true,
             "allValue": ".*",
@@ -158,6 +148,24 @@ spec:
             },
             "hide": 0,
             "label": "Disk Device",
+            "refresh": 2
+          },
+          {
+            "name": "mountpoint",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(system_filesystem_usage{host_name=~\"$node\"}, mountpoint)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Mountpoint",
             "refresh": 2
           }
         ]
@@ -226,9 +234,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "showThresholdMarkers": true,
             "showThresholdLabels": false
@@ -284,9 +290,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "showThresholdMarkers": true,
             "showThresholdLabels": false
@@ -340,9 +344,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "area"
@@ -396,9 +398,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "area"
@@ -413,7 +413,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 1
+            "y": 7
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -445,11 +445,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -465,7 +461,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 1
+            "y": 7
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -524,11 +520,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -543,7 +535,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 9
+            "y": 15
           },
           "collapsed": false,
           "panels": []
@@ -557,7 +549,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 10
+            "y": 16
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -591,11 +583,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -611,7 +599,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 10
+            "y": 16
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -645,11 +633,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -665,7 +649,7 @@ spec:
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 10
+            "y": 24
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -704,9 +688,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "area"
@@ -721,7 +703,7 @@ spec:
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 10
+            "y": 24
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -760,9 +742,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "area"
@@ -777,7 +757,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 10
+            "y": 24
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -814,7 +794,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 10
+            "y": 28
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -844,11 +824,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "single"
@@ -863,7 +839,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 18
+            "y": 36
           },
           "collapsed": false,
           "panels": []
@@ -877,7 +853,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 19
+            "y": 37
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -943,11 +919,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -963,7 +935,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 19
+            "y": 37
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1007,11 +979,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1026,7 +994,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 27
+            "y": 45
           },
           "collapsed": false,
           "panels": []
@@ -1040,7 +1008,7 @@ spec:
             "h": 10,
             "w": 24,
             "x": 0,
-            "y": 28
+            "y": 46
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1203,7 +1171,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 38
+            "y": 56
           },
           "collapsed": false,
           "panels": []
@@ -1217,19 +1185,19 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 39
+            "y": 57
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"read\"}[5m])",
+              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"read\", host_name=~\"$node\"}[$__interval])",
               "legendFormat": "Read {{device}}",
               "refId": "A"
             },
             {
-              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"write\"}[5m])",
+              "expr": "rate(system_disk_io{device=~\"$disk\", direction=\"write\", host_name=~\"$node\"}[$__interval])",
               "legendFormat": "Write {{device}}",
               "refId": "B"
             }
@@ -1251,11 +1219,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1271,19 +1235,19 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 39
+            "y": 57
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"read\"}[5m])",
+              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"read\", host_name=~\"$node\"}[$__interval])",
               "legendFormat": "Read ops {{device}}",
               "refId": "A"
             },
             {
-              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"write\"}[5m])",
+              "expr": "rate(system_disk_operations{device=~\"$disk\", direction=\"write\", host_name=~\"$node\"}[$__interval])",
               "legendFormat": "Write ops {{device}}",
               "refId": "B"
             }
@@ -1305,11 +1269,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1325,19 +1285,19 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 39
+            "y": 65
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "rate(system_disk_io_time{device=~\"$disk\"}[5m])",
+              "expr": "rate(system_disk_io_time{device=~\"$disk\", host_name=~\"$node\"}[$__interval])",
               "legendFormat": "I/O time {{device}}",
               "refId": "A"
             },
             {
-              "expr": "rate(system_disk_operation_time{device=~\"$disk\", direction=~\"read|write\"}[5m])",
+              "expr": "rate(system_disk_operation_time{device=~\"$disk\", direction=~\"read|write\", host_name=~\"$node\"}[$__interval])",
               "legendFormat": "Op time {{direction}} {{device}}",
               "refId": "B"
             }
@@ -1359,11 +1319,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1379,14 +1335,14 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 39
+            "y": 65
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "system_disk_pending_operations{device=~\"$disk\"}",
+              "expr": "system_disk_pending_operations{device=~\"$disk\", host_name=~\"$node\"}",
               "legendFormat": "Pending {{device}}",
               "refId": "A"
             }
@@ -1428,11 +1384,225 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 205,
+          "type": "row",
+          "title": "📁 Filesystem",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 73
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 20,
+          "type": "gauge",
+          "title": "Filesystem Utilization %",
+          "description": "Used filesystem space as a percentage. Above 85% risks disk-full incidents.",
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 0,
+            "y": 74
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum(system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum(system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
+              "refId": "A",
+              "legendFormat": "FS Util %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 85
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 21,
+          "type": "stat",
+          "title": "Filesystem Used",
+          "description": "Absolute used bytes across selected mountpoints.",
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 8,
+            "y": 74
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "refId": "A",
+              "legendFormat": "Used"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 22,
+          "type": "stat",
+          "title": "Filesystem Free",
+          "description": "Absolute free bytes across selected mountpoints.",
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 16,
+            "y": 74
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "refId": "A",
+              "legendFormat": "Free"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 10737418240
+                  },
+                  {
+                    "color": "green",
+                    "value": 53687091200
+                  }
+                ]
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 23,
+          "type": "timeseries",
+          "title": "Filesystem Usage by Mountpoint",
+          "description": "Used filesystem space over time by mountpoint. Watch for steady growth toward capacity.",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 80
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (mountpoint, host_name) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "legendFormat": "{{host_name}} {{mountpoint}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1447,7 +1617,7 @@ spec:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 47
+            "y": 88
           },
           "collapsed": false,
           "panels": []
@@ -1461,7 +1631,7 @@ spec:
             "h": 6,
             "w": 6,
             "x": 0,
-            "y": 48
+            "y": 89
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1502,9 +1672,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "showThresholdMarkers": true,
             "showThresholdLabels": false
@@ -1519,7 +1687,7 @@ spec:
             "h": 6,
             "w": 6,
             "x": 6,
-            "y": 48
+            "y": 89
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1558,9 +1726,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "none"
@@ -1575,7 +1741,7 @@ spec:
             "h": 6,
             "w": 6,
             "x": 12,
-            "y": 48
+            "y": 89
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1614,9 +1780,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "area"
@@ -1631,7 +1795,7 @@ spec:
             "h": 6,
             "w": 6,
             "x": 18,
-            "y": 48
+            "y": 89
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1670,9 +1834,7 @@ spec:
           },
           "options": {
             "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ]
+              "calcs": ["lastNotNull"]
             },
             "colorMode": "background",
             "graphMode": "area"
@@ -1687,7 +1849,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 48
+            "y": 95
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1719,11 +1881,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1739,7 +1897,7 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 48
+            "y": 95
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1771,11 +1929,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1791,7 +1945,7 @@ spec:
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 48
+            "y": 103
           },
           "datasource": {
             "uid": "${datasource_mimir}"
@@ -1825,15 +1979,88 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ]
+              "calcs": ["last", "min", "max"]
             },
             "tooltip": {
               "mode": "multi"
             }
+          }
+        },
+        {
+          "id": 207,
+          "type": "row",
+          "title": "⚙️ Process Breakdown",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 111
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 31,
+          "type": "piechart",
+          "title": "Process Breakdown",
+          "description": "Top processes by CPU time over the selected range, with remaining processes rolled into Other. Matches standard infrastructure process breakdown views.",
+          "gridPos": {
+            "h": 12,
+            "w": 12,
+            "x": 0,
+            "y": 112
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(7, sum by (process_executable_name) (increase(process_cpu_time{host_name=~\"$node\"}[$__range])))",
+              "legendFormat": "{{process_executable_name}}",
+              "refId": "A",
+              "instant": true
+            },
+            {
+              "expr": "label_replace((sum(increase(process_cpu_time{host_name=~\"$node\"}[$__range])) - sum(topk(7, sum by (process_executable_name) (increase(process_cpu_time{host_name=~\"$node\"}[$__range]))))) > 0, \"process_executable_name\", \"Other\", \"\", \"\")",
+              "legendFormat": "Other",
+              "refId": "B",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short",
+              "decimals": 2,
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": ["lastNotNull"],
+              "fields": ""
+            },
+            "pieType": "donut",
+            "tooltip": {
+              "mode": "single",
+              "sort": "desc"
+            },
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "values": ["value", "percent"],
+              "calcs": []
+            },
+            "displayLabels": ["percent"]
           }
         },
         {
@@ -1845,14 +2072,14 @@ spec:
             "h": 12,
             "w": 12,
             "x": 12,
-            "y": 48
+            "y": 112
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "topk(5, 100 * (1 - (sum by (host_name) (rate(system_cpu_time{state=\"idle\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time[5m])), 1e-9))))",
+              "expr": "topk(5, 100 * (1 - (sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))))",
               "legendFormat": "{{host_name}}",
               "refId": "A"
             }
@@ -1896,11 +2123,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "mean",
-                "max"
-              ]
+              "calcs": ["last", "mean", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -1908,79 +2131,23 @@ spec:
           }
         },
         {
-          "id": 45,
-          "type": "piechart",
-          "title": "Process Status Breakdown",
-          "description": "Process counts by kernel status (running/sleeping/stopped/zombies). Works with the processes scraper when per-process metrics are not enabled.",
+          "id": 33,
+          "type": "timeseries",
+          "title": "Top Processes by CPU",
+          "description": "Top 10 process executables by CPU usage rate. Useful for spotting runaway processes during onboarding.",
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 48
+            "y": 124
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (status) (system_processes_count)",
-              "legendFormat": "{{status}}",
-              "refId": "A",
-              "instant": true
-            }
-          ],
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "unit": "short"
-            }
-          },
-          "options": {
-            "reduceOptions": {
-              "values": false,
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": ""
-            },
-            "pieType": "donut",
-            "tooltip": {
-              "mode": "single",
-              "sort": "desc"
-            },
-            "legend": {
-              "displayMode": "table",
-              "placement": "right",
-              "values": [
-                "value",
-                "percent"
-              ]
-            },
-            "displayLabels": [
-              "percent"
-            ]
-          }
-        },
-        {
-          "id": 46,
-          "type": "timeseries",
-          "title": "Processes Created / sec",
-          "description": "Rate of new processes created. Spikes often indicate fork bombs or restart loops.",
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 48
-          },
-          "datasource": {
-            "uid": "${datasource_mimir}"
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(system_processes_created[5m]))",
-              "legendFormat": "created/s",
+              "expr": "topk(10, sum by (process_executable_name) (rate(process_cpu_time{host_name=~\"$node\"}[$__interval])))",
+              "legendFormat": "{{process_executable_name}}",
               "refId": "A"
             }
           ],
@@ -1991,36 +2158,77 @@ spec:
               },
               "custom": {
                 "drawStyle": "line",
-                "fillOpacity": 20,
+                "fillOpacity": 15,
                 "lineInterpolation": "smooth"
               },
-              "unit": "ops"
+              "unit": "s"
             }
           },
           "options": {
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "mean",
-                "max"
-              ]
+              "calcs": ["last", "mean", "max"]
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 34,
+          "type": "timeseries",
+          "title": "Top Processes by Memory",
+          "description": "Top 10 process executables by resident memory usage.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 124
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (process_executable_name) (process_memory_usage{host_name=~\"$node\"}))",
+              "legendFormat": "{{process_executable_name}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["last", "mean", "max"]
+            },
+            "tooltip": {
+              "mode": "multi"
             }
           }
         },
         {
           "id": 208,
           "type": "row",
-          "title": "📡 Host Network",
+          "title": "📡 Host Network & Disk Space",
           "gridPos": {
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 60
+            "y": 132
           },
           "collapsed": false,
           "panels": []
@@ -2034,14 +2242,14 @@ spec:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 61
+            "y": 133
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (host_name) (rate(system_network_io{direction=\"transmit\", device=~\"$device\"}[5m]))",
+              "expr": "sum by (host_name) (rate(system_network_io{direction=\"transmit\", device=~\"$device\", host_name=~\"$node\"}[$__interval]))",
               "legendFormat": "{{host_name}}",
               "refId": "A"
             }
@@ -2063,11 +2271,7 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "mean",
-                "max"
-              ]
+              "calcs": ["last", "mean", "max"]
             },
             "tooltip": {
               "mode": "multi"
@@ -2083,14 +2287,14 @@ spec:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 61
+            "y": 133
           },
           "datasource": {
             "uid": "${datasource_mimir}"
           },
           "targets": [
             {
-              "expr": "sum by (host_name) (rate(system_network_io{direction=\"receive\", device=~\"$device\"}[5m]))",
+              "expr": "sum by (host_name) (rate(system_network_io{direction=\"receive\", device=~\"$device\", host_name=~\"$node\"}[$__interval]))",
               "legendFormat": "{{host_name}}",
               "refId": "A"
             }
@@ -2112,15 +2316,602 @@ spec:
             "legend": {
               "displayMode": "table",
               "placement": "bottom",
-              "calcs": [
-                "last",
-                "mean",
-                "max"
-              ]
+              "calcs": ["last", "mean", "max"]
             },
             "tooltip": {
               "mode": "multi"
             }
+          }
+        },
+        {
+          "id": 37,
+          "type": "bargauge",
+          "title": "Disk Space Used % by Mountpoint",
+          "description": "Per-mountpoint disk space utilization. Critical for disk-full prevention during onboarding and ops.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 141
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (mountpoint, host_name) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum by (mountpoint, host_name) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
+              "legendFormat": "{{host_name}}:{{mountpoint}}",
+              "refId": "A",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "orange",
+                    "value": 85
+                  },
+                  {
+                    "color": "red",
+                    "value": 95
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "values": false,
+              "fields": ""
+            },
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 38,
+          "type": "table",
+          "title": "Disk Space Inventory",
+          "description": "Per-mountpoint used, free, and total disk space with utilization %. Primary disk-space view for node health onboarding.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 141
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "legendFormat": "used",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "legendFormat": "free",
+              "refId": "B",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "legendFormat": "total",
+              "refId": "C",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "100 * sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum by (host_name, mountpoint, device, type) (system_filesystem_usage{state=~\"used|free|reserved\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
+              "legendFormat": "used_pct",
+              "refId": "D",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Used"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Free"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Total"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #D"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Used %"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "yellow",
+                          "value": 70
+                        },
+                        {
+                          "color": "orange",
+                          "value": 85
+                        },
+                        {
+                          "color": "red",
+                          "value": 95
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "displayName": "Used %",
+                "desc": true
+              }
+            ],
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time #A": true,
+                  "Time #B": true,
+                  "Time #C": true,
+                  "Time #D": true
+                },
+                "indexByName": {
+                  "host_name": 0,
+                  "mountpoint": 1,
+                  "device": 2,
+                  "type": 3,
+                  "Value #A": 4,
+                  "Value #B": 5,
+                  "Value #C": 6,
+                  "Value #D": 7
+                },
+                "renameByName": {
+                  "host_name": "Host",
+                  "mountpoint": "Mountpoint",
+                  "device": "Device",
+                  "type": "FS Type"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 39,
+          "type": "timeseries",
+          "title": "Disk Free Space Trend",
+          "description": "Free filesystem bytes over time by mountpoint. Falling free space is an early warning for capacity issues.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 149
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (host_name, mountpoint) (system_filesystem_usage{state=\"free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"})",
+              "legendFormat": "{{host_name}} {{mountpoint}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth"
+              },
+              "unit": "bytes"
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["last", "min", "max"]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 40,
+          "type": "timeseries",
+          "title": "Filesystem Inodes Usage",
+          "description": "Inode usage by mountpoint. Disk can fill on inodes even when bytes remain free.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 149
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (host_name, mountpoint) (system_filesystem_inodes_usage{state=\"used\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}) / clamp_min(sum by (host_name, mountpoint) (system_filesystem_inodes_usage{state=~\"used|free\", mountpoint=~\"$mountpoint\", host_name=~\"$node\"}), 1)",
+              "legendFormat": "{{host_name}} {{mountpoint}}",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "thresholdsStyle": {
+                  "mode": "dashed+area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              },
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["last", "min", "max"]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 209,
+          "type": "row",
+          "title": "🧭 Node Readiness (Onboarding)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 157
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 41,
+          "type": "stat",
+          "title": "Nodes Ready",
+          "description": "Count of Kubernetes nodes reporting Ready=true.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 0,
+            "y": 158
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"}) or vector(0)",
+              "refId": "A",
+              "legendFormat": "Ready"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 42,
+          "type": "stat",
+          "title": "Nodes Not Ready",
+          "description": "Count of Kubernetes nodes that are not Ready.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 6,
+            "y": 158
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"} == 0) or vector(0)",
+              "refId": "A",
+              "legendFormat": "Not Ready"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 43,
+          "type": "stat",
+          "title": "Memory Pressure Nodes",
+          "description": "Nodes with MemoryPressure=true.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 12,
+            "y": 158
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"MemoryPressure\", status=\"true\"}) or vector(0)",
+              "refId": "A",
+              "legendFormat": "MemoryPressure"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 44,
+          "type": "stat",
+          "title": "Disk Pressure Nodes",
+          "description": "Nodes with DiskPressure=true.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 18,
+            "y": 158
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"DiskPressure\", status=\"true\"}) or vector(0)",
+              "refId": "A",
+              "legendFormat": "DiskPressure"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": ["lastNotNull"]
+            },
+            "colorMode": "background",
+            "graphMode": "none"
           }
         }
       ]
