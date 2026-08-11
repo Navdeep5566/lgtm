@@ -1,0 +1,2712 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: d1c-service-health-sre-overview-v2
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: d1c-service-health-sre-overview-v2
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+  folder: LGTM
+  json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "name": "Firing Alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "red",
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "titleFormat": "{{alertname}}",
+            "textFormat": "{{annotations.summary}}"
+          }
+        ]
+      },
+      "description": "Service-level signals including logs, errors, traces, and version health for the D1C Banking Applic | v2: original Loki panels preserved; added SRE First Look (Mimir golden signals) + Daily Ops panels at the bottom.",
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "liveNow": false,
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 16,
+          "title": "🚨 Critical Indicators",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Total count of ERROR-level log entries in the last hour. A spike indicates active incidents requ",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 50
+                  },
+                  {
+                    "color": "red",
+                    "value": 200
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 1
+          },
+          "id": 1,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "sum"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "value_and_name",
+            "widelayout": true
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "count_over_time({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |= \"ERROR\" [1h])",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Total ERROR Logs (1h)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Number of unique services currently emitting logs. If this drops below expected count, a service may be dow",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 2
+                  },
+                  {
+                    "color": "green",
+                    "value": 5
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 1
+          },
+          "id": 2,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "widelayout": true
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "count(count by (service_name) (rate({k8s_namespace_name=\"$namespace\"}[$__auto])))",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Active Services",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Rate of OpenTelemetry Collector export failures per minute. Non-zero means telemetry data",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 12,
+            "y": 1
+          },
+          "id": 3,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "sum"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "widelayout": true
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({k8s_namespace_name=\"$namespace\"} |= \"UnknownHostException|ConnectException\" |= \"opentelemetry-collector\" [1m]))",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "OTel Export Failures (/min)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Number of unique pods experiencing UnknownHostException when trying to reach the OTel Collector. These pods have a complete telemetry bl",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 18,
+            "y": 1
+          },
+          "id": 13,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "widelayout": true
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "count by (k8s_pod_name) (count_over_time({k8s_namespace_name=\"$namespace\"} |= \"UnknownHostException\" |= \"opentelemetry-collector\" [1h]))",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Pods with OTel Connectivity Issues",
+          "type": "stat"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 5
+          },
+          "id": 17,
+          "title": "📉 Error Trends & Rates",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Rate of ERROR logs over time grouped by service. Helps identify which service is generating the most errors and when spikes occur.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "dashed"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 10
+                  },
+                  {
+                    "color": "red",
+                    "value": 50
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 6
+          },
+          "id": 4,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "expr": "sum by (service_name) (rate({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |~ \"ERROR\" [$__interval]))",
+              "legendFormat": "{{service_name}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Error Log Rate by Service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Stacked comparison of WARN and ERROR log volumes over time. Rising WARN levels often precede ERROR spikes.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 40,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "ERROR"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "WARN"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 6
+          },
+          "id": 5,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(rate({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |= \"ERROR\" [$__interval]))",
+              "legendFormat": "ERROR",
+              "queryType": "range",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(rate({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |= \"WARN\" [$__interval]))",
+              "legendFormat": "WARN",
+              "queryType": "range",
+              "refId": "B"
+            }
+          ],
+          "title": "Warn vs Error Log Volume",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Timeline of failed telemetry exports to the OTel Collector, separated by signal type (spans vs metrics). Persistent fail",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "bars",
+                "fillOpacity": 80,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "normal"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Span Export Failures"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "orange",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Metric Export Failures"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 14
+          },
+          "id": 11,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({k8s_namespace_name=\"$namespace\"} |= \"Failed to export spans\" [1m]))",
+              "legendFormat": "Span Export Failures",
+              "queryType": "range",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({k8s_namespace_name=\"$namespace\"} |= \"Failed to export metrics\" [1m]))",
+              "legendFormat": "Metric Export Failures",
+              "queryType": "range",
+              "refId": "B"
+            }
+          ],
+          "title": "OTel Export Failure Events Timeline",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Rate of log ingestion from FluentBit agents per node. A drop may indicate a FluentBit agent crash or log file rotation",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "showValues": false,
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 14
+          },
+          "id": 14,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "expr": "sum by (k8s_node_name) (rate({k8s_namespace_name=\"$namespace\", k8s_daemonset_name=\"fluent-bit\"} [$__interval]))",
+              "legendFormat": "{{k8s_node_name}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Log Ingestion Rate by Node (FluentBit)",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 22
+          },
+          "id": 18,
+          "title": "📊 Distribution & Breakdown",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Bar chart showing which services produce the most ERROR logs in the last 24 hours. Focus remediation effor",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "fillOpacity": 80,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineWidth": 1,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 23
+          },
+          "id": 6,
+          "options": {
+            "barRadius": 0,
+            "barWidth": 0.7,
+            "fullHighlight": false,
+            "groupWidth": 0.7,
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal",
+            "showValue": "always",
+            "stacking": "none",
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            },
+            "xTickLabelRotation": 0,
+            "xTickLabelSpacing": 0
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "topk(5, sum by (service_name) (count_over_time({k8s_namespace_name=\"$namespace\"} |= \"ERROR\" [24h])))",
+              "legendFormat": "{{service_name}}",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Top 5 Error-Generating Services (24h)",
+          "type": "barchart"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Proportional share of total log volume per service. Helps identify noisy services that may need log level tuning.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 23
+          },
+          "id": 9,
+          "options": {
+            "displayLabels": [
+              "percent"
+            ],
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "pieType": "donut",
+            "reduceOptions": {
+              "calcs": [],
+              "fields": "",
+              "values": true
+            },
+            "sort": "desc",
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum by (service_name) (count_over_time({k8s_namespace_name=\"$namespace\"} [1h]))",
+              "legendFormat": "{{service_name}}",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Log Distribution by Service",
+          "type": "piechart"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Split between console logs and application logs. Useful for understanding which log channel carries more signals",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 23
+          },
+          "id": 10,
+          "options": {
+            "displayLabels": [
+              "percent"
+            ],
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "pieType": "pie",
+            "reduceOptions": {
+              "calcs": [],
+              "fields": "",
+              "values": true
+            },
+            "sort": "desc",
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "builder",
+              "expr": "sum by(fileType, service_name) (count_over_time({k8s_namespace_name=\"$namespace\", fileType=\"$fileType\", service_name=~\"$service\"} [1h]))",
+              "legendFormat": "auto",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Log Distribution by File Type",
+          "type": "piechart"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Heatmap showing log volume patterns by hour-of-day per service. Identifies peak error windows and recurring patterns for capacity planning.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              }
+            }
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 31
+          },
+          "id": 15,
+          "options": {
+            "annotations": {
+              "clustering": -1,
+              "multiLane": false
+            },
+            "calculate": true,
+            "calculation": {
+              "xBuckets": {
+                "mode": "size",
+                "value": "1h"
+              }
+            },
+            "cellGap": 1,
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-orange",
+              "mode": "scheme",
+              "reverse": true,
+              "scale": "exponential",
+              "scheme": "RdYlGn",
+              "steps": 64
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-09
+            },
+            "legend": {
+              "show": true
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "editorMode": "code",
+              "expr": "sum by (service_name) (count_over_time({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} [1h]))",
+              "legendFormat": "{{service_name}}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Log Volume Heatmap by Service",
+          "type": "heatmap"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 39
+          },
+          "id": 19,
+          "title": "📋 Detail Tables & Logs",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Detailed recent ERROR log entries with key context. Click any line to explore further in Grafana Explore view.",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 40
+          },
+          "id": 7,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showControls": false,
+            "showFieldSelector": false,
+            "showLevel": true,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "timestampResolution": "ms",
+            "unwrappedColumns": false,
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "{k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} != \"ERROR\"",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Recent ERROR Logs",
+          "transformations": [
+            {
+              "id": "extractFields",
+              "options": {
+                "source": "Line"
+              }
+            }
+          ],
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Shows which service versions are running on which pods. Version mismatches (e.g., rwd-700.0.82 vs api/sam-700.0.93) are highlighted to",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "footer": {
+                  "reducers": []
+                },
+                "inspect": false
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "service_version"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "700.0.82-DEV": {
+                            "color": "red",
+                            "text": "700.0.82-DEV (outdated)"
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 50
+          },
+          "id": 12,
+          "options": {
+            "cellHeight": "sm",
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "service_name"
+              }
+            ]
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "expr": "count by (service_name, service_version, k8s_pod_name) (count_over_time({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} [5m]))",
+              "legendFormat": "{{service_name}} / {{service_version}} / {{k8s_pod_name}}",
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Service Version Matrix",
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "description": "Real-time log stream filtered by selected service, severity, and namespace. Use for live incident triage and debugging.",
+          "gridPos": {
+            "h": 12,
+            "w": 24,
+            "x": 0,
+            "y": 58
+          },
+          "id": 8,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showControls": false,
+            "showFieldSelector": false,
+            "showLabels": true,
+            "showLevel": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "timestampResolution": "ms",
+            "unwrappedColumns": false,
+            "wrapLogMessage": true
+          },
+          "pluginVersion": "13.0.1",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "expr": "{k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} | logfmt | level=~\"$severity\"",
+              "refId": "A"
+            }
+          ],
+          "title": "Live Log Stream",
+          "type": "logs"
+        },
+        {
+          "id": 100,
+          "type": "row",
+          "title": "SRE First Look — Incident Triage (Golden Signals)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 71
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 101,
+          "type": "stat",
+          "title": "Firing Alerts",
+          "description": "SRE FIRST CHECK: count of firing alerts (Mimir). Not present in original Loki panels.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 72
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
+              "refId": "A",
+              "legendFormat": "Firing",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 3
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 102,
+          "type": "stat",
+          "title": "HTTP Error Rate % (5xx)",
+          "description": "SRE FIRST CHECK: 5xx % from Mimir HTTP metrics (RED Errors).",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 4,
+            "y": 72
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "100 * sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])), 1e-9)",
+              "refId": "A",
+              "legendFormat": "5xx %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 103,
+          "type": "stat",
+          "title": "Availability %",
+          "description": "Non-5xx success rate — war-room availability signal.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 72
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "100 * (1 - sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])), 1e-9))",
+              "refId": "A",
+              "legendFormat": "Availability"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 99
+                  },
+                  {
+                    "color": "green",
+                    "value": 99.9
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 104,
+          "type": "stat",
+          "title": "Latency p99",
+          "description": "SRE FIRST CHECK: tail latency from Mimir.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 12,
+            "y": 72
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p99"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 3
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 105,
+          "type": "stat",
+          "title": "Request Rate (RPS)",
+          "description": "SRE FIRST CHECK: traffic volume. Drop = outage; spike = retry storm.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 16,
+            "y": 72
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "RPS"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 106,
+          "type": "stat",
+          "title": "Latency p95",
+          "description": "p95 latency companion to p99 for daily SLO view.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 72
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p95"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "red",
+                    "value": 1.5
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 107,
+          "type": "gauge",
+          "title": "Availability Gauge",
+          "description": "At-a-glance availability for war-room screens.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 77
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "100 * (1 - sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])), 1e-9))",
+              "refId": "A",
+              "legendFormat": "Avail %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 99
+                  },
+                  {
+                    "color": "green",
+                    "value": 99.9
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true
+          }
+        },
+        {
+          "id": 108,
+          "type": "timeseries",
+          "title": "Traffic vs 5xx (correlation)",
+          "description": "Overlay all RPS vs 5xx RPS — classic SRE incident graph. (New; not a duplicate of Loki error log rate.)",
+          "gridPos": {
+            "h": 6,
+            "w": 18,
+            "x": 6,
+            "y": 77
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "All RPS"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "5xx RPS"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 109,
+          "type": "timeseries",
+          "title": "HTTP Latency p50 / p95 / p99",
+          "description": "Latency percentiles from Mimir — complements Loki log panels above.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 83
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p50"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "p95"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "p99"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 110,
+          "type": "bargauge",
+          "title": "Top Slow HTTP Routes (p99)",
+          "description": "Worst routes by p99 — next drill-down after golden signals. (New Mimir panel; not Top 5 Error Services.)",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 83
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "topk(8, histogram_quantile(0.99, sum by (le, job, http_route) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m]))))",
+              "refId": "A",
+              "legendFormat": "{{job}} {{http_route}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 111,
+          "type": "table",
+          "title": "Firing Alerts Detail",
+          "description": "Alert names currently firing — start of incident checklist.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 91
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "ALERTS{alertstate=\"firing\"}",
+              "refId": "A",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 112,
+          "type": "table",
+          "title": "Per-Job Snapshot (RPS / Error% / p99)",
+          "description": "War-room scorecard from Mimir HTTP metrics.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 91
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (job) (rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "rps",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "100 * sum by (job) (rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum by (job) (rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])), 1e-9)",
+              "refId": "B",
+              "legendFormat": "error_pct",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$mimir_job\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "p99",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 200,
+          "type": "row",
+          "title": "Daily Ops Overview (Service Health)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 99
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 201,
+          "type": "timeseries",
+          "title": "HTTP Status Class Mix (2xx/4xx/5xx)",
+          "description": "Market-standard daily API health mix from Mimir. Not present in original dashboard.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 100
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"2..\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "2xx"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"4..\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "4xx"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$mimir_job\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m]))",
+              "refId": "C",
+              "legendFormat": "5xx"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 30,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "normal",
+                  "group": "A"
+                }
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 202,
+          "type": "timeseries",
+          "title": "DB Pool Pending (dependency saturation)",
+          "description": "If HTTP errors rise with DB pending, dependency is likely the cause. Uses db_client_connections_pending_requests.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 100
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "sum by (pool_name, job) (db_client_connections_pending_requests{job=~\"$mimir_job\"})",
+              "refId": "A",
+              "legendFormat": "Pending {{job}}/{{pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 203,
+          "type": "timeseries",
+          "title": "Exception / Timeout / OOM Log Signals",
+          "description": "Daily ops signal for crash/timeout patterns (complements existing ERROR/WARN panels; different matchers).",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 108
+          },
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "editorMode": "code",
+              "expr": "sum(rate({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |~ \"(?i)OutOfMemory|OOM\" [$__interval]))",
+              "queryType": "range",
+              "refId": "A",
+              "direction": "backward",
+              "legendFormat": "OOM"
+            },
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "editorMode": "code",
+              "expr": "sum(rate({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |~ \"(?i)Timeout|Timed out\" [$__interval]))",
+              "queryType": "range",
+              "refId": "B",
+              "direction": "backward",
+              "legendFormat": "Timeout"
+            },
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "editorMode": "code",
+              "expr": "sum(rate({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"} |~ \"(?i)Exception\" [$__interval]))",
+              "queryType": "range",
+              "refId": "C",
+              "direction": "backward",
+              "legendFormat": "Exception"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 204,
+          "type": "timeseries",
+          "title": "HTTP Client Upstream Latency p95/p99",
+          "description": "Outbound dependency latency — SRE checks this when errors are external.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 108
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le, server_address) (rate(http_client_request_duration_bucket{job=~\"$mimir_job\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p95 {{server_address}}"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le, server_address) (rate(http_client_request_duration_bucket{job=~\"$mimir_job\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "p99 {{server_address}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        }
+      ],
+      "preload": false,
+      "refresh": "30s",
+      "schemaVersion": 42,
+      "tags": [
+        "d1c",
+        "sre",
+        "opentelemetry",
+        "loki",
+        "kubernetes",
+        "v2",
+        "daily-ops",
+        "mimir"
+      ],
+      "templating": {
+        "list": [
+          {
+            "allowCustomValue": true,
+            "current": {
+              "text": "",
+              "value": ""
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Loki Datasource",
+            "multi": false,
+            "name": "datasource_loki",
+            "options": [],
+            "query": "loki",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "type": "datasource"
+          },
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "label": "Mimir Datasource",
+            "hide": 0,
+            "current": {},
+            "refresh": 1,
+            "includeAll": false,
+            "multi": false
+          },
+          {
+            "allValue": ".*",
+            "allowCustomValue": true,
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "${datasource_loki}"
+            },
+            "hide": 0,
+            "includeAll": true,
+            "label": "Namespace",
+            "multi": true,
+            "name": "namespace",
+            "options": [],
+            "query": "label_values({}, k8s_namespace_name)",
+            "refresh": 2,
+            "regex": "",
+            "regexApplyTo": "value",
+            "skipUrlSync": false,
+            "sort": 0,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "allowCustomValue": true,
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "${datasource_loki}"
+            },
+            "hide": 0,
+            "includeAll": true,
+            "label": "Service",
+            "multi": true,
+            "name": "service",
+            "options": [],
+            "query": "label_values({k8s_namespace_name=\"$namespace\"}, service_name)",
+            "refresh": 0,
+            "regex": "",
+            "regexApplyTo": "value",
+            "skipUrlSync": false,
+            "sort": 0,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "allowCustomValue": true,
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "${datasource_loki}"
+            },
+            "hide": 0,
+            "includeAll": true,
+            "label": "Version",
+            "multi": true,
+            "name": "version",
+            "options": [],
+            "query": "label_values({k8s_namespace_name=\"$namespace\", service_name=~\"$service\"}, service_version)",
+            "refresh": 0,
+            "regex": "",
+            "regexApplyTo": "value",
+            "skipUrlSync": false,
+            "sort": 0,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "allowCustomValue": true,
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "${datasource_loki}"
+            },
+            "hide": 0,
+            "includeAll": true,
+            "label": "Severity",
+            "multi": true,
+            "name": "severity",
+            "options": [],
+            "query": "ERROR,WARN,INFO",
+            "regexApplyTo": "value",
+            "skipUrlSync": false,
+            "type": "custom",
+            "valuesFormat": "csv"
+          },
+          {
+            "allValue": ".*",
+            "allowCustomValue": true,
+            "current": {
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "${datasource_loki}"
+            },
+            "definition": "",
+            "hide": 0,
+            "includeAll": true,
+            "label": "File Type",
+            "multi": true,
+            "name": "fileType",
+            "options": [],
+            "query": {
+              "label": "fileType",
+              "refId": "LokiVariableQueryEditor-VariableQuery",
+              "stream": "",
+              "type": 1
+            },
+            "refresh": 1,
+            "regex": "",
+            "regexApplyTo": "value",
+            "skipUrlSync": false,
+            "sort": 0,
+            "type": "query"
+          },
+          {
+            "name": "mimir_job",
+            "type": "query",
+            "label": "App / Job (Mimir)",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(http_server_request_duration_bucket, job)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "refresh": 2,
+            "sort": 1,
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0
+          }
+        ]
+      },
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "5s",
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "2h",
+          "1d"
+        ]
+      },
+      "timezone": "browser",
+      "title": "D1C App - Service Health & SRE Overview (v2)",
+      "version": 7,
+      "uid": "d1c-svc-health-v2",
+      "id": null
+    }
