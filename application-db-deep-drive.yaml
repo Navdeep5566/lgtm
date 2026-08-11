@@ -1,0 +1,2954 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: d1c-app-performance-deep-dive-v2
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: d1c-app-performance-deep-dive-v2
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+  folder: LGTM
+  json: |
+    {
+      "id": null,
+      "uid": "d1c-app-perf-v2",
+      "title": "D1C App - Application & DB Deep Dive (v2 Daily Ops)",
+      "description": "NEW dashboard (uid d1c-app-perf-v2) — does not replace the original. Daily ops + deep dive: HTTP/API RED metrics, DB connection pools (HikariCP/OTel), Tomcat saturation, trace/span analysis, golden-signal gauges, and SRE triage tables. Datasources: Mimir (Prometheus) + Tempo.",
+      "tags": [
+        "d1c",
+        "sre",
+        "opentelemetry",
+        "kubernetes",
+        "database",
+        "daily-ops",
+        "v2"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "graphTooltip": 1,
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m"
+        ],
+        "time_options": [
+          "5m",
+          "15m",
+          "1h",
+          "6h",
+          "12h",
+          "24h",
+          "2d",
+          "7d"
+        ]
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "label": "Mimir Datasource"
+          },
+          {
+            "name": "datasource_tempo",
+            "type": "datasource",
+            "query": "tempo",
+            "current": {},
+            "hide": 0,
+            "label": "Tempo Datasource"
+          },
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(target_info, k8s_namespace_name)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {},
+            "hide": 0,
+            "label": "Namespace",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "service",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(http_server_request_duration_bucket, job)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "App / Job",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "http_route",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(http_server_request_duration_bucket{job=~\"$service\"}, http_route)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "HTTP Route",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "http_method",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(http_server_request_duration_bucket{job=~\"$service\"}, http_request_method)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "HTTP Method",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "pool_name",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(db_client_connections_usage, pool_name)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "DB Pool",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "connector",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(tomcat_request_count, tomcat_request_processor_name)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Tomcat Connector",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "span_service",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(traces_span_metrics_calls_total, service_name)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Span Service",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "span_name",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(traces_span_metrics_calls_total{service_name=~\"$span_service\"}, span_name)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Span Name",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "span_kind",
+            "type": "custom",
+            "query": "SPAN_KIND_SERVER,SPAN_KIND_CLIENT,SPAN_KIND_INTERNAL",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Span Kind"
+          },
+          {
+            "name": "db_system",
+            "type": "query",
+            "datasource": {
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(traces_span_metrics_duration_bucket{service_name=~\"$span_service\", db_system!=\"\", db_system!=\"N/A\"}, db_system)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "DB System",
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "name": "Firing Alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "red",
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "titleFormat": "{{alertname}}",
+            "textFormat": "{{annotations.summary}}"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 300,
+          "type": "row",
+          "title": "HTTP / API Performance",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "HTTP Server Request Rate",
+          "description": "Request throughput (RED: Rate). Excludes /actuator/health. Filter by App/Job, route, and method.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job, http_route, http_request_method, http_response_status_code) (rate(http_server_request_duration_count{job=~\"$service\", http_route=~\"$http_route\", http_request_method=~\"$http_method\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "{{job}} | {{http_request_method}} | {{http_route}} | {{http_response_status_code}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "HTTP Server Latency p50 / p95 / p99",
+          "description": "Latency percentiles (RED: Duration). Watch p99 for tail latency impacting users.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 1
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le, job, http_route) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\", http_route=~\"$http_route\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p50 {{job}} | {{http_route}}"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, job, http_route) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\", http_route=~\"$http_route\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "p95 {{job}} | {{http_route}}"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, job, http_route) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\", http_route=~\"$http_route\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "p99 {{job}} | {{http_route}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "HTTP Error Rate by Route & Status",
+          "description": "4xx/5xx error throughput (RED: Errors). Spike in 5xx usually indicates app/DB failures.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 9
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job, http_route, http_request_method, http_response_status_code) (rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"[45]..\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "{{job}} | {{http_request_method}} | {{http_route}} | {{http_response_status_code}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "HTTP Client Latency by Upstream",
+          "description": "Outbound HTTP client p95/p99 latency to upstream dependencies. High values indicate slow downstream services.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 9
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, job, server_address) (rate(http_client_request_duration_bucket{job=~\"$service\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p95 {{job}} -> {{server_address}}"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, job, server_address) (rate(http_client_request_duration_bucket{job=~\"$service\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "p99 {{job}} -> {{server_address}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "HTTP Status Code Mix",
+          "description": "Traffic mix by response status class. Useful for spotting rising 4xx/5xx share during incidents.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 17
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"2..\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "2xx"
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"3..\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "3xx"
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"4..\"}[5m]))",
+              "refId": "C",
+              "legendFormat": "4xx"
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m]))",
+              "refId": "D",
+              "legendFormat": "5xx"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "HTTP Success Rate %",
+          "description": "Non-5xx success percentage over time. Market-standard availability SLI for daily ops.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 17
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - (sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])), 1e-9)))",
+              "refId": "A",
+              "legendFormat": "Success %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 301,
+          "type": "row",
+          "title": "Database Connection Pool (HikariCP / OTel db.client)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 25
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "DB Pool Usage: Used / Idle / Max",
+          "description": "Active vs idle connections against pool max. Used near Max with pending requests = saturation risk.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 26
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", pool_name=~\"$pool_name\", state=\"used\"})",
+              "refId": "A",
+              "legendFormat": "Used - {{pool_name}}"
+            },
+            {
+              "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", pool_name=~\"$pool_name\", state=\"idle\"})",
+              "refId": "B",
+              "legendFormat": "Idle - {{pool_name}}"
+            },
+            {
+              "expr": "sum by (pool_name) (db_client_connections_max{job=~\"$service\", pool_name=~\"$pool_name\"})",
+              "refId": "C",
+              "legendFormat": "Max - {{pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "DB Pool Pending Requests",
+          "description": "Threads waiting for a free connection. Any sustained >0 is a production warning.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 26
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (pool_name) (db_client_connections_pending_requests{job=~\"$service\", pool_name=~\"$pool_name\"})",
+              "refId": "A",
+              "legendFormat": "Pending - {{pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "DB Pool Wait / Use / Create p99",
+          "description": "p99 connection wait, use, and create times. Rising wait time often precedes API latency incidents.",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 34
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, pool_name) (rate(db_client_connections_wait_time_bucket{job=~\"$service\", pool_name=~\"$pool_name\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "Wait p99 {{pool_name}}"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, pool_name) (rate(db_client_connections_use_time_bucket{job=~\"$service\", pool_name=~\"$pool_name\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "Use p99 {{pool_name}}"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, pool_name) (rate(db_client_connections_create_time_bucket{job=~\"$service\", pool_name=~\"$pool_name\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "Create p99 {{pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "DB Pool Saturation %",
+          "description": "Used / Max * 100. Keep headroom; sustained >80% warrants pool tuning or query optimization.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 42
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (pool_name) (db_client_connections_usage{job=~\"$service\", pool_name=~\"$pool_name\", state=\"used\"}) / clamp_min(sum by (pool_name) (db_client_connections_max{job=~\"$service\", pool_name=~\"$pool_name\"}), 1)",
+              "refId": "A",
+              "legendFormat": "Saturation % {{pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 12,
+          "type": "timeseries",
+          "title": "DB Pool Idle Ratio %",
+          "description": "Idle / Max * 100. Very low idle with high traffic suggests the pool is undersized.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 42
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (pool_name) (db_client_connections_usage{job=~\"$service\", pool_name=~\"$pool_name\", state=\"idle\"}) / clamp_min(sum by (pool_name) (db_client_connections_max{job=~\"$service\", pool_name=~\"$pool_name\"}), 1)",
+              "refId": "A",
+              "legendFormat": "Idle % {{pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 302,
+          "type": "row",
+          "title": "Tomcat / Servlet Container",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 50
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 14,
+          "type": "timeseries",
+          "title": "Tomcat Request Count & Error Count",
+          "description": "Container-level request and error rates by connector.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 51
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (tomcat_request_processor_name, job) (rate(tomcat_request_count{job=~\"$service\", tomcat_request_processor_name=~\"$connector\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "Requests - {{job}} {{tomcat_request_processor_name}}"
+            },
+            {
+              "expr": "sum by (tomcat_request_processor_name, job) (rate(tomcat_error_count{job=~\"$service\", tomcat_request_processor_name=~\"$connector\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "Errors - {{job}} {{tomcat_request_processor_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 15,
+          "type": "timeseries",
+          "title": "Tomcat Request Max Duration",
+          "description": "Max request duration observed by Tomcat processor. Complements HTTP p99 for container-level outliers.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 51
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "max by (tomcat_request_processor_name, job) (tomcat_request_duration_max{job=~\"$service\", tomcat_request_processor_name=~\"$connector\"})",
+              "refId": "A",
+              "legendFormat": "Max - {{job}} {{tomcat_request_processor_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 16,
+          "type": "timeseries",
+          "title": "Tomcat Thread Pool Usage",
+          "description": "Busy vs current vs max threads. Busy near Max means request queuing / latency.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 59
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job, tomcat_thread_pool_name) (tomcat_thread_busy_count{job=~\"$service\"})",
+              "refId": "A",
+              "legendFormat": "Busy - {{job}} {{tomcat_thread_pool_name}}"
+            },
+            {
+              "expr": "sum by (job, tomcat_thread_pool_name) (tomcat_thread_count{job=~\"$service\"})",
+              "refId": "B",
+              "legendFormat": "Current - {{job}} {{tomcat_thread_pool_name}}"
+            },
+            {
+              "expr": "sum by (job, tomcat_thread_pool_name) (tomcat_thread_limit{job=~\"$service\"})",
+              "refId": "C",
+              "legendFormat": "Max - {{job}} {{tomcat_thread_pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 18,
+          "type": "timeseries",
+          "title": "Tomcat Network IO",
+          "description": "Bytes received/transmitted per connector. Sudden drops can indicate upstream connectivity issues.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 59
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job, tomcat_request_processor_name) (rate(tomcat_network_io{job=~\"$service\", tomcat_request_processor_name=~\"$connector\", network_io_direction=\"receive\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "RX - {{job}} {{tomcat_request_processor_name}}"
+            },
+            {
+              "expr": "sum by (job, tomcat_request_processor_name) (rate(tomcat_network_io{job=~\"$service\", tomcat_request_processor_name=~\"$connector\", network_io_direction=\"transmit\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "TX - {{job}} {{tomcat_request_processor_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 17,
+          "type": "timeseries",
+          "title": "Tomcat Thread Busy %",
+          "description": "Busy / Max * 100. Daily saturation signal for servlet thread pool.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 67
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (job, tomcat_thread_pool_name) (tomcat_thread_busy_count{job=~\"$service\"}) / clamp_min(sum by (job, tomcat_thread_pool_name) (tomcat_thread_limit{job=~\"$service\"}), 1)",
+              "refId": "A",
+              "legendFormat": "Busy % {{job}} {{tomcat_thread_pool_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 13,
+          "type": "timeseries",
+          "title": "Tomcat Error Ratio %",
+          "description": "Error / Request * 100 at container level.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 67
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum by (job, tomcat_request_processor_name) (rate(tomcat_error_count{job=~\"$service\", tomcat_request_processor_name=~\"$connector\"}[5m])) / clamp_min(sum by (job, tomcat_request_processor_name) (rate(tomcat_request_count{job=~\"$service\", tomcat_request_processor_name=~\"$connector\"}[5m])), 1e-9)",
+              "refId": "A",
+              "legendFormat": "Error % {{job}} {{tomcat_request_processor_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 303,
+          "type": "row",
+          "title": "Trace / Span Metrics",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 75
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 19,
+          "type": "timeseries",
+          "title": "Span Call Volume by Service & Span Name",
+          "description": "Span call rate from Tempo span metrics. Use Span Service / Name / Kind variables.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 76
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name=~\"$span_service\", span_name=~\"$span_name\", span_kind=~\"$span_kind\"}[5m])) or sum by (service_name, span_name) (rate(traces_span_metrics_calls{service_name=~\"$span_service\", span_name=~\"$span_name\", span_kind=~\"$span_kind\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "{{service_name}} / {{span_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 20,
+          "type": "timeseries",
+          "title": "Span Duration p95 / p99",
+          "description": "Span latency percentiles for deep-dive of slow operations.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 76
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, span_name, span_kind) (rate(traces_span_metrics_duration_bucket{service_name=~\"$span_service\", span_name=~\"$span_name\", span_kind=~\"$span_kind\"}[$__rate_interval])))",
+              "refId": "A",
+              "legendFormat": "p95 {{span_name}} [{{span_kind}}]"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, span_name, span_kind) (rate(traces_span_metrics_duration_bucket{service_name=~\"$span_service\", span_name=~\"$span_name\", span_kind=~\"$span_kind\"}[$__rate_interval])))",
+              "refId": "B",
+              "legendFormat": "p99 {{span_name}} [{{span_kind}}]"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 23,
+          "type": "timeseries",
+          "title": "DB Span Latency (by db_system)",
+          "description": "Database span p95/p99 from trace metrics. Filter with DB System variable (e.g. postgresql).",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 84
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, db_system, service_name) (rate(traces_span_metrics_duration_bucket{service_name=~\"$span_service\", db_system=~\"$db_system\", db_system!=\"N/A\", db_system!=\"\"}[$__rate_interval])))",
+              "refId": "A",
+              "legendFormat": "p95 {{service_name}} [{{db_system}}]"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, db_system, service_name) (rate(traces_span_metrics_duration_bucket{service_name=~\"$span_service\", db_system=~\"$db_system\", db_system!=\"N/A\", db_system!=\"\"}[$__rate_interval])))",
+              "refId": "B",
+              "legendFormat": "p99 {{service_name}} [{{db_system}}]"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 22,
+          "type": "piechart",
+          "title": "Span Kind Distribution",
+          "description": "Share of SERVER / CLIENT / INTERNAL spans for the selected span service.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 84
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (span_kind) (rate(traces_span_metrics_calls_total{service_name=~\"$span_service\"}[5m])) or sum by (span_kind) (rate(traces_span_metrics_calls{service_name=~\"$span_service\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "{{span_kind}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "values": [
+                "value",
+                "percent"
+              ]
+            },
+            "pieType": "pie",
+            "tooltip": {
+              "mode": "single"
+            },
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          }
+        },
+        {
+          "id": 24,
+          "type": "table",
+          "title": "Recent Traces from Tempo",
+          "description": "Recent traces from Tempo. Prefer a single Span Service value if native search does not support multi-value All.",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 92
+          },
+          "datasource": {
+            "uid": "${datasource_tempo}"
+          },
+          "targets": [
+            {
+              "queryType": "nativeSearch",
+              "serviceName": "$span_service",
+              "limit": 20,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true
+          }
+        },
+        {
+          "id": 304,
+          "type": "row",
+          "title": "SRE Insight Tables",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 100
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 25,
+          "type": "table",
+          "title": "Top 10 Slowest HTTP Routes",
+          "description": "Highest p99 latency routes right now — prioritize for daily triage.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 101
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, histogram_quantile(0.99, sum by (le, job, http_route) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m]))))",
+              "refId": "A",
+              "legendFormat": "{{job}} {{http_route}}",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "timestamp": true
+                },
+                "renameByName": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": 26,
+          "type": "table",
+          "title": "Top 10 Error-Prone Routes",
+          "description": "Routes with highest 4xx/5xx error rates.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 101
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (job, http_route, http_request_method) (rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"[45]..\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "{{job}} {{http_route}}",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "timestamp": true
+                },
+                "renameByName": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": 27,
+          "type": "table",
+          "title": "Top 10 Slowest Spans",
+          "description": "Slowest spans by p99 duration from span metrics.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 109
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, histogram_quantile(0.99, sum by (le, service_name, span_name, span_kind) (rate(traces_span_metrics_duration_bucket{service_name=~\"$span_service\"}[$__rate_interval]))))",
+              "refId": "A",
+              "legendFormat": "{{service_name}} {{span_name}}",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "timestamp": true
+                },
+                "renameByName": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": 28,
+          "type": "table",
+          "title": "DB Pools - Highest Wait / Use / Create Time",
+          "description": "Pool timing snapshot for daily DB health checks.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 109
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, pool_name) (rate(db_client_connections_wait_time_bucket{job=~\"$service\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "wait_p99 {{pool_name}}",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, pool_name) (rate(db_client_connections_use_time_bucket{job=~\"$service\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "use_p99 {{pool_name}}",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, pool_name) (rate(db_client_connections_create_time_bucket{job=~\"$service\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "create_p99 {{pool_name}}",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "timestamp": true
+                },
+                "renameByName": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": 305,
+          "type": "row",
+          "title": "Daily Ops Overview (Golden Signals)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 117
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 40,
+          "type": "stat",
+          "title": "Request Rate",
+          "description": "Current aggregate RPS excluding health checks.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 0,
+            "y": 118
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "RPS"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 0
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "value_and_name",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 41,
+          "type": "stat",
+          "title": "Error Rate %",
+          "description": "5xx percentage of all requests (daily availability signal).",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 4,
+            "y": 118
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])), 1e-9)",
+              "refId": "A",
+              "legendFormat": "5xx %"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "value_and_name",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 42,
+          "type": "stat",
+          "title": "Latency p99",
+          "description": "Overall HTTP server p99 latency.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 118
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p99"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 3
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "value_and_name",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 43,
+          "type": "stat",
+          "title": "Latency p95",
+          "description": "Overall HTTP server p95 latency.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 12,
+            "y": 118
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p95"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "red",
+                    "value": 1.5
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "value_and_name",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 44,
+          "type": "stat",
+          "title": "DB Pending",
+          "description": "Total threads waiting for DB connections across selected pools.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 16,
+            "y": 118
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(db_client_connections_pending_requests{job=~\"$service\", pool_name=~\"$pool_name\"})",
+              "refId": "A",
+              "legendFormat": "Pending"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 5
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "value_and_name",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 45,
+          "type": "stat",
+          "title": "HTTP Client p99",
+          "description": "Outbound client call p99 — dependency health at a glance.",
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 118
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_client_request_duration_bucket{job=~\"$service\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "Client p99"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 3
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "colorMode": "background",
+            "graphMode": "area",
+            "textMode": "value_and_name",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 46,
+          "type": "gauge",
+          "title": "Availability %",
+          "description": "Non-5xx success rate. Target typically >= 99.9% for production SLOs.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 123
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * (1 - (sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])), 1e-9)))",
+              "refId": "A",
+              "legendFormat": "Availability"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 99
+                  },
+                  {
+                    "color": "green",
+                    "value": 99.9
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 47,
+          "type": "gauge",
+          "title": "DB Pool Utilization %",
+          "description": "Used connections / max pool size.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 6,
+            "y": 123
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum(db_client_connections_usage{job=~\"$service\", pool_name=~\"$pool_name\", state=\"used\"}) / clamp_min(sum(db_client_connections_max{job=~\"$service\", pool_name=~\"$pool_name\"}), 1)",
+              "refId": "A",
+              "legendFormat": "Pool Util"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "orange",
+                    "value": 85
+                  },
+                  {
+                    "color": "red",
+                    "value": 95
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 48,
+          "type": "gauge",
+          "title": "Tomcat Thread Busy %",
+          "description": "Busy servlet threads / thread limit.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 12,
+            "y": 123
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "100 * sum(tomcat_thread_busy_count{job=~\"$service\"}) / clamp_min(sum(tomcat_thread_limit{job=~\"$service\"}), 1)",
+              "refId": "A",
+              "legendFormat": "Thread Busy"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 70
+                  },
+                  {
+                    "color": "orange",
+                    "value": 85
+                  },
+                  {
+                    "color": "red",
+                    "value": 95
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 49,
+          "type": "gauge",
+          "title": "Apdex (approx)",
+          "description": "Approximate Apdex using p95 thresholds: satisfied <0.5s, tolerating <2s. Market-standard UX score.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 18,
+            "y": 123
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp(\n  (\n    sum(rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\", le=\"0.5\"}[5m]))\n    + 0.5 * clamp_min(\n        sum(rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\", le=\"2\"}[5m]))\n        - sum(rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\", le=\"0.5\"}[5m])),\n        0\n      )\n  )\n  / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])), 1e-9),\n  0, 1\n)",
+              "refId": "A",
+              "legendFormat": "Apdex"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "max": 1,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.85
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.94
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true,
+            "showThresholdLabels": false
+          }
+        },
+        {
+          "id": 50,
+          "type": "timeseries",
+          "title": "Traffic vs Errors (Daily Trend)",
+          "description": "Overlay of total RPS and 5xx RPS for quick incident correlation.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 129
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "All requests"
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "5xx errors"
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"4..\"}[5m]))",
+              "refId": "C",
+              "legendFormat": "4xx client errors"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 51,
+          "type": "timeseries",
+          "title": "Latency SLO Burn (p99 vs 1s / 3s)",
+          "description": "p99 latency with reference thresholds commonly used for daily SLO tracking.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 129
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p99"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "p95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "p50"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 52,
+          "type": "bargauge",
+          "title": "Top Routes by Traffic",
+          "description": "Highest throughput routes — useful for capacity and canary focus.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 137
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (http_route) (rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "{{http_route}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 53,
+          "type": "bargauge",
+          "title": "Top Slow DB Spans",
+          "description": "Slowest DB-related spans by p95 (filtered by db_system).",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 137
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, histogram_quantile(0.95, sum by (le, span_name) (rate(traces_span_metrics_duration_bucket{service_name=~\"$span_service\", db_system=~\"$db_system\", db_system!=\"N/A\", db_system!=\"\"}[$__rate_interval]))))",
+              "refId": "A",
+              "legendFormat": "{{span_name}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 54,
+          "type": "timeseries",
+          "title": "HTTP Client Error Rate by Upstream",
+          "description": "Outbound client failures by upstream host — dependency reliability view.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 145
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job, server_address, http_response_status_code) (rate(http_client_request_duration_count{job=~\"$service\", http_response_status_code=~\"[45]..\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "{{job}} -> {{server_address}} | {{http_response_status_code}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 55,
+          "type": "timeseries",
+          "title": "DB Wait Time vs HTTP p99 (Correlation)",
+          "description": "Correlation view: DB connection wait p99 alongside HTTP p99. Rising together often means pool exhaustion.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 145
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(db_client_connections_wait_time_bucket{job=~\"$service\", pool_name=~\"$pool_name\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "DB wait p99"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m]))) * 1000",
+              "refId": "B",
+              "legendFormat": "HTTP p99 (ms)"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 56,
+          "type": "table",
+          "title": "Daily Ops Snapshot - Per Job",
+          "description": "Per-service snapshot: RPS, 5xx rate, p99 latency for standup / war-room.",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 153
+          },
+          "datasource": {
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job) (rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "rps",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "100 * sum by (job) (rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum by (job) (rate(http_server_request_duration_count{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])), 1e-9)",
+              "refId": "B",
+              "legendFormat": "error_pct",
+              "instant": true,
+              "format": "table"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!=\"/actuator/health\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "p99",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false
+            }
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "timestamp": true
+                },
+                "renameByName": {}
+              }
+            }
+          ]
+        }
+      ]
+    }
