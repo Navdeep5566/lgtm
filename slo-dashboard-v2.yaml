@@ -1,0 +1,1561 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: d1c-slo-dashboard-v2
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: d1c-slo-dashboard-v2
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+  folder: LGTM
+  json: |
+    {
+      "id": null,
+      "uid": "d1c-slo-metrics-v2",
+      "title": "D1C SLO Metrics (v2 Industry Standard)",
+      "description": "Engineering SLO dashboard (Google SRE style): event-based SLIs, error budget remaining/consumed, multi-window burn rates (1h/6h/3d/30d), RED golden signals, good/bad events, per-job scorecard, dependency saturation. Metrics: http_server_request_duration_* aligned with app dashboards. Excludes actuator/health. Does not overwrite uid d1c-slo-metrics.",
+      "tags": [
+        "d1c",
+        "slo",
+        "sre",
+        "opentelemetry",
+        "golden-signals",
+        "error-budget",
+        "v2"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "graphTooltip": 1,
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "name": "SLO Alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "red",
+            "expr": "ALERTS{alertstate=\"firing\", alertname=~\".*SLO.*|.*Error.*|.*Latency.*|.*Availability.*|.*Burn.*\"}",
+            "titleFormat": "{{alertname}}",
+            "textFormat": "{{annotations.summary}}"
+          },
+          {
+            "name": "Deployments",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "blue",
+            "expr": "changes(kube_deployment_status_observed_generation{namespace=~\"$namespace\"}[5m]) > 0",
+            "titleFormat": "Deployment change: {{deployment}}"
+          }
+        ]
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "label": "Mimir Datasource"
+          },
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(target_info, k8s_namespace_name) or label_values(kube_namespace_status_phase, namespace)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "label": "Namespace",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "service",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(http_server_request_duration_bucket, job)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "label": "App / Job",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "slo_latency_ms",
+            "type": "custom",
+            "query": "200,500,1000,2000",
+            "current": {
+              "text": "500",
+              "value": "500"
+            },
+            "label": "Latency Target (ms)",
+            "hide": 0
+          },
+          {
+            "name": "slo_availability_pct",
+            "type": "custom",
+            "query": "99,99.5,99.9,99.95,99.99",
+            "current": {
+              "text": "99.9",
+              "value": "99.9"
+            },
+            "label": "Availability Target (%)",
+            "hide": 0
+          },
+          {
+            "name": "deployment",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(kube_deployment_metadata_generation{namespace=~\"$namespace\"}, deployment)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "label": "Deployment",
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 100,
+          "type": "row",
+          "title": "SLO Overview (Engineering Objectives)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 101,
+          "type": "gauge",
+          "title": "Availability SLI (30d)",
+          "description": "Event-based availability SLI over 30 days vs SLO target variable.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[30d])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[30d])), 1))",
+              "refId": "A",
+              "legendFormat": "Availability 30d",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.99
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.999
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true
+          }
+        },
+        {
+          "id": 102,
+          "type": "gauge",
+          "title": "Error Budget Remaining",
+          "description": "Google SRE style: remaining monthly error budget for selected availability SLO.",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 6,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp(1 - ((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[30d])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[30d])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9)), 0, 1)",
+              "refId": "A",
+              "legendFormat": "Budget left",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 0.2
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.8
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true
+          }
+        },
+        {
+          "id": 103,
+          "type": "stat",
+          "title": "Error Rate (5m)",
+          "description": "Current 5xx ratio (SLO error SLI).",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 12,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])), 1e-9)",
+              "refId": "A",
+              "legendFormat": "Error rate",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.001
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.01
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 104,
+          "type": "stat",
+          "title": "Latency p95 vs Target",
+          "description": "p95 / target (>1 means missing latency SLO).",
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 18,
+            "y": 1
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "(histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])))) / ($slo_latency_ms / 1000)",
+              "refId": "A",
+              "legendFormat": "p95 / target",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 1.5
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 110,
+          "type": "row",
+          "title": "Error Budget Burn Rate (Multi-Window — Industry Standard)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 7
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 111,
+          "type": "stat",
+          "title": "Burn Rate 1h (fast)",
+          "description": "Fast burn: how quickly budget is consuming over 1h. >14.4 ≈ exhausts 30d budget in ~2h (page-worthy).",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 0,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[1h])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[1h])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "A",
+              "legendFormat": "1h burn",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 6
+                  },
+                  {
+                    "color": "orange",
+                    "value": 14.4
+                  },
+                  {
+                    "color": "red",
+                    "value": 20
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 112,
+          "type": "stat",
+          "title": "Burn Rate 6h",
+          "description": "Medium window burn rate for ticket/page decisioning.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 6,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[6h])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[6h])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "A",
+              "legendFormat": "6h burn",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 3
+                  },
+                  {
+                    "color": "orange",
+                    "value": 6
+                  },
+                  {
+                    "color": "red",
+                    "value": 10
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 113,
+          "type": "stat",
+          "title": "Burn Rate 3d (slow)",
+          "description": "Slow burn over 3d — catches sustained degradation.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 12,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[3d])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[3d])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "A",
+              "legendFormat": "3d burn",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "orange",
+                    "value": 2
+                  },
+                  {
+                    "color": "red",
+                    "value": 3
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 114,
+          "type": "stat",
+          "title": "Burn Rate 30d",
+          "description": "Monthly burn — should stay near 1.0 if on track.",
+          "gridPos": {
+            "h": 5,
+            "w": 6,
+            "x": 18,
+            "y": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[30d])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[30d])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "A",
+              "legendFormat": "30d burn",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1
+                  },
+                  {
+                    "color": "red",
+                    "value": 1.5
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 115,
+          "type": "timeseries",
+          "title": "Burn Rate Over Time (1h / 6h / 3d)",
+          "description": "Google SRE multi-window burn-rate chart for SLO alerting context.",
+          "gridPos": {
+            "h": 8,
+            "w": 16,
+            "x": 0,
+            "y": 13
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[1h])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[1h])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "A",
+              "legendFormat": "1h",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[6h])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[6h])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "B",
+              "legendFormat": "6h",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "clamp_min((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[3d])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[3d])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0)",
+              "refId": "C",
+              "legendFormat": "3d",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "1",
+              "refId": "D",
+              "legendFormat": "budget pace (=1)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 116,
+          "type": "gauge",
+          "title": "Budget Consumed (30d)",
+          "description": "Fraction of monthly error budget already used.",
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 13
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "clamp((1 - (sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[30d])) / clamp_min(sum(increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[30d])), 1))) / clamp_min(vector(1 - ($slo_availability_pct / 100)), 1e-9), 0, 2)",
+              "refId": "A",
+              "legendFormat": "Consumed",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1.5,
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.5
+                  },
+                  {
+                    "color": "orange",
+                    "value": 0.8
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "showThresholdMarkers": true
+          }
+        },
+        {
+          "id": 120,
+          "type": "row",
+          "title": "Golden Signals (RED + Latency)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 21
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 121,
+          "type": "timeseries",
+          "title": "Request Rate (RPS)",
+          "description": "Throughput golden signal.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 22
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "All",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code=~\"5..\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "5xx",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 122,
+          "type": "timeseries",
+          "title": "Availability SLI (short window)",
+          "description": "Rolling availability vs SLO target.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 22
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "(1 - sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])), 1e-9))",
+              "refId": "A",
+              "legendFormat": "Availability",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "$slo_availability_pct / 100",
+              "refId": "B",
+              "legendFormat": "SLO target",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 123,
+          "type": "timeseries",
+          "title": "Latency p50 / p95 / p99 vs SLO",
+          "description": "Latency SLI percentiles vs target.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 30
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.5, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p50",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])))",
+              "refId": "B",
+              "legendFormat": "p95",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])))",
+              "refId": "C",
+              "legendFormat": "p99",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "$slo_latency_ms / 1000",
+              "refId": "D",
+              "legendFormat": "SLO target",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 124,
+          "type": "timeseries",
+          "title": "Error Rate vs SLO (0.1%)",
+          "description": "Error SLI with typical 0.1% line for 99.9% availability.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 30
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])), 1e-9)",
+              "refId": "A",
+              "legendFormat": "Error rate",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "0.001",
+              "refId": "B",
+              "legendFormat": "0.1% line",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "1 - ($slo_availability_pct / 100)",
+              "refId": "C",
+              "legendFormat": "Allowed error ratio",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 130,
+          "type": "row",
+          "title": "Good vs Bad Events (SLI building blocks)",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 38
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 131,
+          "type": "timeseries",
+          "title": "Good Requests vs Bad (5xx) Events",
+          "description": "Industry-standard event-based SLI components: good and bad request rates.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 39
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[5m]))",
+              "refId": "A",
+              "legendFormat": "Good",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            },
+            {
+              "expr": "sum(rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code=~\"5..\"}[5m]))",
+              "refId": "B",
+              "legendFormat": "Bad (5xx)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 132,
+          "type": "bargauge",
+          "title": "Top Jobs Missing Latency SLO (p95)",
+          "description": "Jobs whose p95 exceeds latency target.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 39
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(10, histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m]))) * 1000)",
+              "refId": "A",
+              "legendFormat": "{{job}}",
+              "instant": true,
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true
+          }
+        },
+        {
+          "id": 140,
+          "type": "row",
+          "title": "Per-Service SLO Compliance",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 47
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 141,
+          "type": "table",
+          "title": "Per-Job SLO Scorecard",
+          "description": "Availability 7d/30d, error rate, p95, burn 1h — engineering standup view.",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 48
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job) (increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[7d])) / clamp_min(sum by (job) (increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[7d])), 1)",
+              "refId": "A",
+              "legendFormat": "avail_7d",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "sum by (job) (increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code!~\"5..\"}[30d])) / clamp_min(sum by (job) (increase(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[30d])), 1)",
+              "refId": "B",
+              "legendFormat": "avail_30d",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "sum by (job) (rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\", http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum by (job) (rate(http_server_request_duration_count{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])), 1e-9)",
+              "refId": "C",
+              "legendFormat": "error_rate",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", http_route!~\"/actuator.*|/health.*|/healthz|/ready|/readiness|/live|/liveliness|/ping\"}[5m])))",
+              "refId": "D",
+              "legendFormat": "p95",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "filterable": true
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm"
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "timestamp": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 150,
+          "type": "row",
+          "title": "Saturation / Dependency Signals",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 58
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 151,
+          "type": "timeseries",
+          "title": "DB Pool Pending (saturation)",
+          "description": "Dependency saturation often precedes SLO burn.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 59
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (job, pool_name) (db_client_connections_pending_requests{job=~\"$service\"})",
+              "refId": "A",
+              "legendFormat": "{{job}} / {{pool_name}}",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 152,
+          "type": "timeseries",
+          "title": "HTTP Client Upstream p95 (dependencies)",
+          "description": "Outbound dependency latency impacting user SLO.",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 59
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, server_address) (rate(http_client_request_duration_bucket{job=~\"$service\"}[5m])))",
+              "refId": "A",
+              "legendFormat": "p95 {{server_address}}",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        }
+      ]
+    }
