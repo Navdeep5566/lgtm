@@ -1,0 +1,1395 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: prod-muq6-platform-ibm-mq
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: prod-muq6-platform-ibm-mq
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+  folder: LGTM
+  json: |
+    {
+      "id": null,
+      "uid": "prod-muq6-platform-ibm-mq",
+      "title": "PROD Platform - IBM MQ",
+      "description": "IBM MQ platform dashboard (converted from New Relic). Host, queue manager, and queue are dynamic variables — no hardcoded cluster hostname.",
+      "tags": [
+        "d1c",
+        "ibm-mq",
+        "prod",
+        "platform",
+        "middleware"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 3,
+      "refresh": "30s",
+      "editable": true,
+      "graphTooltip": 1,
+      "liveNow": false,
+      "fiscalYearStartMonth": 0,
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m"
+        ],
+        "time_options": [
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "6h",
+          "12h",
+          "24h",
+          "2d",
+          "7d"
+        ]
+      },
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          },
+          {
+            "name": "Firing Alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "enable": true,
+            "hide": false,
+            "iconColor": "red",
+            "expr": "ALERTS{alertstate=\"firing\", alertname=~\".*MQ.*|.*IBM.*|.*Queue.*\"}",
+            "titleFormat": "{{alertname}}",
+            "textFormat": "{{annotations.summary}}"
+          }
+        ]
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "label": "Mimir Datasource",
+            "refresh": 1
+          },
+          {
+            "name": "datasource_loki",
+            "type": "datasource",
+            "query": "loki",
+            "current": {},
+            "hide": 0,
+            "label": "Loki Datasource",
+            "refresh": 1
+          },
+          {
+            "name": "hostname",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values({__name__=~\"ibmq_.*\"}, host_hostname)",
+            "definition": "label_values({__name__=~\"ibmq_.*\"}, host_hostname)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Host",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "qmgr",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(ibmq_qmgr_connection_count, qmgr)",
+            "definition": "label_values(ibmq_qmgr_connection_count, qmgr)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Queue Manager",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "queue",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(ibmq_queue_depth{qmgr=~\"$qmgr\"}, queue)",
+            "definition": "label_values(ibmq_queue_depth{qmgr=~\"$qmgr\"}, queue)",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "hide": 0,
+            "label": "Queue",
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "row",
+          "title": "Queue Managers",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Queue Managers",
+          "gridPos": {
+            "h": 6,
+            "w": 4,
+            "x": 0,
+            "y": 1
+          },
+          "description": "Count of unique IBM MQ queue managers.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "count(count by (qmgr) ((ibmq_qmgr_connection_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_connection_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Connections (current)",
+          "gridPos": {
+            "h": 6,
+            "w": 4,
+            "x": 4,
+            "y": 1
+          },
+          "description": "Total MQ connections across selected hosts.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum((ibmq_qmgr_connection_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_connection_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"}))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Connections",
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 8,
+            "y": 1
+          },
+          "description": "Connection count trend per queue manager.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (qmgr) ((ibmq_qmgr_connection_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_connection_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"}))",
+              "refId": "A",
+              "legendFormat": "{{qmgr}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 25,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Errors",
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 16,
+            "y": 1
+          },
+          "description": "Aggregated MQ manager operation failures.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (qmgr) (\n  avg_over_time((ibmq_qmgr_failed_browse_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_browse_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_mqget_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_mqget_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_mqinq_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_mqinq_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_mqopen_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_mqopen_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_mqput_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_mqput_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_mqput1_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_mqput1_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_mqsubrq_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_mqsubrq_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_create_alter_resume_subscription_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_create_alter_resume_subscription_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_failed_topic_mqput_mqput1_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_failed_topic_mqput_mqput1_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m])\n)",
+              "refId": "A",
+              "legendFormat": "{{qmgr}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 15,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "normal",
+                  "group": "A"
+                }
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 6,
+          "type": "stat",
+          "title": "Messages (throughput proxy)",
+          "gridPos": {
+            "h": 6,
+            "w": 4,
+            "x": 0,
+            "y": 7
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(\n  avg_over_time((ibmq_qmgr_published_to_subscribers_message_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_published_to_subscribers_message_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_interval_mqput1_total_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_interval_mqput1_total_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_interval_destructive_get_total_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_interval_destructive_get_total_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m])\n)",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 7,
+          "type": "stat",
+          "title": "Queues Count",
+          "gridPos": {
+            "h": 6,
+            "w": 4,
+            "x": 4,
+            "y": 7
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "count(count by (queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "value_and_name"
+          }
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Messages",
+          "gridPos": {
+            "h": 6,
+            "w": 16,
+            "x": 8,
+            "y": 7
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (qmgr) (\n  avg_over_time((ibmq_qmgr_published_to_subscribers_message_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_published_to_subscribers_message_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_interval_mqput1_total_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_interval_mqput1_total_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_interval_destructive_get_total_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_interval_destructive_get_total_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m])\n)",
+              "refId": "A",
+              "legendFormat": "{{qmgr}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 25,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "type": "table",
+          "title": "Queues info",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 13
+          },
+          "description": "Queue depth, utilization, put/get and expired message snapshot.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "max by (qmgr, queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "100 * max by (qmgr, queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})) / clamp_min(max by (qmgr, queue) ((ibmq_queue_attribute_max_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_attribute_max_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})), 1)",
+              "refId": "B",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "max by (qmgr, queue) ((ibmq_queue_input_mqput1_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_input_mqput1_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "C",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "max by (qmgr, queue) ((ibmq_queue_mqget_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_mqget_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "D",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "max by (qmgr, queue) ((ibmq_queue_expired_messages{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_expired_messages{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "E",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "filterable": true
+              }
+            }
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm"
+          },
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "FileSystem Usage",
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 21
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum by (qmgr) (\n  avg_over_time((ibmq_qmgr_queue_manager_file_system_in_use_bytes{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_queue_manager_file_system_in_use_bytes{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m]) +\n  avg_over_time((ibmq_qmgr_log_file_system_in_use_bytes{host_name=~\"$hostname\", qmgr=~\"$qmgr\"} or ibmq_qmgr_log_file_system_in_use_bytes{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\"})[5m])\n)",
+              "refId": "A",
+              "legendFormat": "{{qmgr}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 11,
+          "type": "logs",
+          "title": "MQ Server Logs",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 28
+          },
+          "description": "Logs for selected host(s). Uses host_name or host label from Loki.",
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource_loki}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "editorMode": "code",
+              "expr": "{host_name=~\"$hostname\"} or {host=~\"$hostname\"}",
+              "queryType": "range",
+              "refId": "A",
+              "direction": "backward"
+            }
+          ],
+          "options": {
+            "showTime": true,
+            "showLabels": true,
+            "wrapLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending"
+          }
+        },
+        {
+          "id": 12,
+          "type": "row",
+          "title": "Queues",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 36
+          },
+          "collapsed": false,
+          "panels": []
+        },
+        {
+          "id": 13,
+          "type": "barchart",
+          "title": "Queue Depth",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 37
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(20, max by (queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})))",
+              "refId": "A",
+              "legendFormat": "{{queue}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "id": 14,
+          "type": "barchart",
+          "title": "Queue Depth %",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 37
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(20, 100 * max by (queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})) / clamp_min(max by (queue) ((ibmq_queue_attribute_max_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_attribute_max_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})), 1))",
+              "refId": "A",
+              "legendFormat": "{{queue}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "id": 15,
+          "type": "timeseries",
+          "title": "Queue Depth (timeseries)",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 37
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "max by (queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 16,
+          "type": "stat",
+          "title": "Queue Depth Total",
+          "gridPos": {
+            "h": 3,
+            "w": 24,
+            "x": 0,
+            "y": 44
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "sum(max by (queue) ((ibmq_queue_depth{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_depth{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "textMode": "auto"
+          }
+        },
+        {
+          "id": 17,
+          "type": "barchart",
+          "title": "Get Messages",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 47
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(20, avg by (queue) (rate((ibmq_queue_mqget_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_mqget_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})[5m])))",
+              "refId": "A",
+              "legendFormat": "{{queue}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "id": 18,
+          "type": "timeseries",
+          "title": "Get Messages Count",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 47
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (queue) (rate((ibmq_queue_mqget_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_mqget_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})[5m]))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 19,
+          "type": "timeseries",
+          "title": "Time Since Last GET",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 47
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "max by (queue) ((ibmq_queue_time_since_get{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_time_since_get{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 20,
+          "type": "barchart",
+          "title": "PUT Messages",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 54
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(20, avg by (queue) (rate((ibmq_queue_input_mqput1_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_input_mqput1_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})[5m])))",
+              "refId": "A",
+              "legendFormat": "{{queue}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "id": 21,
+          "type": "timeseries",
+          "title": "PUT Messages Count",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 54
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (queue) (rate((ibmq_queue_input_mqput1_count{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_input_mqput1_count{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})[5m]))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 22,
+          "type": "timeseries",
+          "title": "Time Since Last PUT",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 54
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "max by (queue) ((ibmq_queue_time_since_put{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_time_since_put{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 23,
+          "type": "barchart",
+          "title": "Oldest Message Age",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 61
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(20, max by (queue) ((ibmq_queue_oldest_message_age{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_oldest_message_age{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})))",
+              "refId": "A",
+              "legendFormat": "{{queue}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "id": 24,
+          "type": "timeseries",
+          "title": "Queue Time Short",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 61
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (queue) ((ibmq_queue_qtime_short{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_qtime_short{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "µs",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 25,
+          "type": "timeseries",
+          "title": "Queue Time Long",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 16,
+            "y": 61
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (queue) ((ibmq_queue_qtime_long{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_qtime_long{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "µs",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 26,
+          "type": "barchart",
+          "title": "Expired Messages",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 0,
+            "y": 68
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "topk(20, avg by (queue) ((ibmq_queue_expired_messages{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_expired_messages{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"})))",
+              "refId": "A",
+              "legendFormat": "{{queue}}",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "id": 27,
+          "type": "timeseries",
+          "title": "Expired Messages (timeseries)",
+          "gridPos": {
+            "h": 7,
+            "w": 8,
+            "x": 8,
+            "y": 68
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource_mimir}"
+          },
+          "targets": [
+            {
+              "expr": "avg by (queue) ((ibmq_queue_expired_messages{host_name=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"} or ibmq_queue_expired_messages{host_hostname=~\"$hostname\", qmgr=~\"$qmgr\", queue=~\"$queue\"}))",
+              "refId": "A",
+              "legendFormat": "{{queue}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "lineInterpolation": "smooth",
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "mode": "normal",
+                  "group": "A"
+                }
+              }
+            }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull",
+                "mean",
+                "max"
+              ],
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        }
+      ]
+    }
