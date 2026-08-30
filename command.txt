@@ -1,3 +1,6 @@
 count by (__name__) ({__name__=~"ibmq_.*"})
 label_values({__name__=~"ibmq_.*"}, host_hostname)
 label_values({__name__=~"ibmq_.*"}, host_name)
+count({__name__=~"ibmq_.*"})
+topk(20, count by (__name__) ({qmgr=~".+"}))
+count by (__name__) ({__name__=~".*mq.*"})
