@@ -22,3 +22,5 @@ max by (queue) (ibmmq_queue_average_queue_time_seconds)
 max by (queue) (ibmmq_queue_oldest_message_age)
 count by (__name__) ({__name__=~"ibmmq_queue_.*since.*"})
 count by (__name__) ({__name__=~"ibmmq_queue_.*time.*"})
+{host_name=~".+"}
+{host=~".+"}
