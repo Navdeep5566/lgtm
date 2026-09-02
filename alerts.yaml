@@ -1,0 +1,231 @@
+replicaCount: 2
+replicaSetsToKeep: 1
+namespace: uq01
+
+image:
+  repository: artifactory.fis.dev/artifactory/d1c-docker-dev/d1c/inbound-alerts
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "700.0.55-DEV"
+
+timezone: "America/New_York"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1111
+  runAsGroup: 1111
+  fsGroup: 1111
+
+# AWS ALB Certificate arn
+certificates:
+  arn: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  # Per-gateway certificate ARNs (override as needed)
+  apigroup: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  uigroup: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  configserver: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  msgroup: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  intmsgroup: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  rptgroup: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+  batchgroup: arn:aws:acm:us-east-1:327441322700:certificate/fc5512b5-af34-4961-8ad0-814cf1e73728
+
+aws:
+  region: us-east-1
+  clusterPrefix: arc-sb-qe
+  externalSecretsEnabled: true
+  imagePullSecret:
+    enabled: true
+    name: "inbound-alerts-image-pull"
+    registry: "https://artifactory.fis.dev/artifactory/d1c-docker-dev"
+    email: "d1c-grp-scm@fisglobal.com"
+
+# Self Signed certificate properties
+cert:
+  duration: 26280h
+  renewBefore: 360h
+  keystore:
+    passwordKey: password
+    password: Y2hhbmdlLaXQ=
+  certManager:
+    clusterIssuerName: selfsigned-cluster-issuer # Self signed cluster issuer name installed at cluster level.
+
+# -- Enable/disable heap dumps Persistent Volume Claim (PVC) and Persistent Volume (PV)
+dumps:
+  enabled: true
+
+efs:
+  enabled: true
+  provisioner: efs.csi.aws.com
+  driver: efs.csi.aws.com
+  pvStorageSize: 25Gi
+  storageSize: 2Gi
+  fileSystemId: fs-0b13448b18dc4290f
+  batch:
+    fileSystemId: fs-061a8d437a8941ec7
+    accessPointId: fsap-054a18eb639e1ade9
+    pvStorageSize: 10Gi
+    storageSize: 5Gi
+    accessModes: ReadWriteMany
+    mountOptions:
+      - tls
+      - noresvport
+  logs:
+    fileSystemId: fs-096e7e9c02aad1d6d
+    accessPointId: fsap-0fcd8573ac4274129
+    pvStorageSize: 10Gi
+    storageSize: 5Gi
+    accessModes: ReadWriteMany
+    mountOptions:
+      - tls
+      - noresvport
+  configrepo:
+    fileSystemId: fs-00ee64ef988c469bd
+    accessPointId: fsap-0fdb21853393f4f27
+    pvStorageSize: 2Gi
+    storageSize: 1Gi
+    accessModes: ReadWriteMany
+    mountOptions:
+      - tls
+      - noresvport
+  heapdump:
+    fileSystemId: fs-06e11f8f391253a89
+    accessPointId: fsap-00ac3567410b7b565
+    pvStorageSize: 50Gi
+    storageSize: 25Gi
+    accessModes: ReadWriteMany
+    mountOptions:
+      - tls
+      - noresvport
+
+ebs:
+  enabled: false
+  hostPath: /ebs
+
+gateway:
+  enabled: true
+  externalDNSDomain:
+    enabled: true
+    domain: architecture-sandbox.dragonflyft.com
+    hostnames:
+      - "ms.uq01.architecture-sandbox.dragonflyft.com"
+      - "uq01.architecture-sandbox.dragonflyft.com"
+      - "msuq01.architecture-sandbox.fis-global.sdm.network"
+  apigroup: true
+  uigroup: true
+  batchgroup: true
+  msgroup: true
+  intmsgroup: true
+  rptgroup: false
+
+authorizationServer:
+  issuerUri: "https://uq01.architecture-sandbox.dragonflyft.com/auth-server"
+
+initContainers:
+  enabled: true
+
+staticContent:
+  awsS3:
+    enabled: true
+    bucketName: uq01-static-content
+    region: us-east-1
+
+targetGroupConfiguration:
+  enabled: true
+
+service:
+  type: ClusterIP
+  nodePort: 
+  httpPort: 80
+  httpsPort: 443
+  targetHttpsPort: 8443
+  targetHttpPort: 8080
+  gRPCport: 
+  rmiPort: 
+  rmi: 
+    min_port: 
+    max_port: 
+
+datapacks:
+  enabled: 
+  activeTenants: 
+  coreDirectoryName: 
+  grpc:
+    enabled: 
+    defaultPort: 
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+    #ephemeral-storage: 500Mi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+    #ephemeral-storage: 250Mi
+
+dbConfig:
+  sslEnabled: false
+  driverClassName: org.postgresql.Driver
+  xaDriverName: org.postgresql.xa.PGXADataSource
+  jobUrl: jdbc:postgresql://arc-sb2-cluster-proxy.proxy-crusubq4h1bf.us-east-1.rds.amazonaws.com:5432/db7uq01
+  username: czFKYnVZcg==
+  password: czFKYnVZcg==
+  schema: sonedba
+  serverName: arc-sb2-cluster-proxy.proxy-crusubq4h1bf.us-east-1.rds.amazonaws.com
+  portNumber: 5432
+  databaseName: db7uq01
+
+batch:
+  propertyReplacements:
+    - folder: lib/ext
+      properties:
+        batch.client.rmi_hosts_ports: "batch.uq01.architecture-sandbox.dragonflyft.com:1099" # RMI host/port for batch client
+        dbPort: 5432 # database port
+        dbName: db7uq01 # database name
+        dbConnection.URL: jdbc:postgresql://arc-sb2-cluster-proxy.proxy-crusubq4h1bf.us-east-1.rds.amazonaws.com:5432/db7uq01 # database url
+        xaDriverName: org.postgresql.xa.PGXADataSource # database driver
+        grnds.factory.env.target.JDBCDirectConnection.jdbc.user: czFKYnVZcg== # database username
+        grnds.factory.env.target.JDBCDirectConnection.jdbc.url: jdbc:postgresql://arc-sb2-cluster-proxy.proxy-crusubq4h1bf.us-east-1.rds.amazonaws.com:5432/db7uq01 # database url
+        cloud.config.server.url: http://configserver.uq01.architecture-sandbox.dragonflyft.com # config server url
+        cloud.config.profile: uq01 # namespace/environment profile
+        CACHE_VALKEY_HOST: "arc-sb2-serverless-vokdlt.serverless.use1.cache.amazonaws.com" # cache host
+        CACHE_VALKEY_PORT: "6379" # cache port
+        CACHE_VALKEY_EVICTION_POLICY: "allkeys-lru" # cache eviction policy
+  folder: setup
+  properties:
+    NAMESPACE: uq01 # namespace/environment
+    BCL_HOME: /efs/uq01/batch # batch client home
+    JAVA_HOME: /usr/lib/jvm/java-25.openjdk # java home directory
+    JAVA_OPTS: # Batch client java opts
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 
+
+cacheClientConfig:
+  cache:
+    client:
+      hazelcast:
+        network:
+          kubernetes:
+            namespace: uq01
+    valkey:
+      host: arc-sb2-serverless-vokdlt.serverless.use1.cache.amazonaws.com
+      port: 6379
+      use-tls: true
+    redis:
+      host: redis-arc-sb2-serverless-vokdlt.serverless.use1.cache.amazonaws.com
+      port: 6379
+      use-tls: true
+
+# -- Custom Java Options - can be used to add additional JVM arguments
+javaOptsCustom: ""
+# -- Custom Java Tool Options - can be used to add additional JVM tool options
+javaToolOptionsCustom: ""
+# -- Tomcat configuration
+tomcat:
+  maxThreads: 
+  minSpareThreads: 
+  maxIdleTime: I encountered an error doing what you asked. Could you try again?
