@@ -24,3 +24,7 @@ count by (__name__) ({__name__=~"ibmmq_queue_.*since.*"})
 count by (__name__) ({__name__=~"ibmmq_queue_.*time.*"})
 {host_name=~".+"}
 {host=~".+"}
+
+---------L3 dashbaord---
+label_values(system_cpu_time, host_name)
+count(system_cpu_time)
