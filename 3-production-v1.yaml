@@ -1,0 +1,5391 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: d1c-l3-production
+  namespace: observability
+  labels:
+    dashboards: grafana-lgtm
+    app.kubernetes.io/name: d1c-l3-production
+    app.kubernetes.io/component: grafana-dashboard
+    app.kubernetes.io/part-of: lgtm-observability
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana-lgtm
+  folder: LGTM
+  json: |
+    {
+      "id": null,
+      "uid": "d1c-l3-production",
+      "title": "D1C L3 Production Dashboard",
+      "description": "L3 production platform dashboard (POD1, POD2, EWB, SBNA). Hosts and services discovered dynamically from Mimir/Loki — no hardcoded NR hostnames.",
+      "tags": [
+        "d1c",
+        "l3",
+        "production",
+        "platform",
+        "postgres",
+        "daily-ops"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 2,
+      "refresh": "30s",
+      "editable": true,
+      "graphTooltip": 1,
+      "liveNow": false,
+      "fiscalYearStartMonth": 0,
+      "time": {
+        "from": "now-3h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "10s",
+          "30s",
+          "1m",
+          "5m",
+          "15m",
+          "30m"
+        ],
+        "time_options": [
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "3h",
+          "6h",
+          "12h",
+          "24h"
+        ]
+      },
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "templating": {
+        "list": [
+          {
+            "name": "datasource_mimir",
+            "type": "datasource",
+            "query": "prometheus",
+            "label": "Mimir Datasource",
+            "hide": 0,
+            "current": {},
+            "refresh": 1
+          },
+          {
+            "name": "datasource_loki",
+            "type": "datasource",
+            "query": "loki",
+            "label": "Loki Datasource",
+            "hide": 0,
+            "current": {},
+            "refresh": 1
+          },
+          {
+            "name": "platform",
+            "type": "custom",
+            "label": "Platform (NR page)",
+            "description": "Organizational — expand the matching row. Host filtering uses Node / Host dropdown.",
+            "query": "POD1,POD2,EWB,SBNA",
+            "options": [
+              {
+                "text": "POD1",
+                "value": "POD1",
+                "selected": true
+              },
+              {
+                "text": "POD2",
+                "value": "POD2",
+                "selected": false
+              },
+              {
+                "text": "EWB",
+                "value": "EWB",
+                "selected": false
+              },
+              {
+                "text": "SBNA",
+                "value": "SBNA",
+                "selected": false
+              }
+            ],
+            "current": {
+              "text": "POD1",
+              "value": "POD1"
+            },
+            "hide": 0
+          },
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(target_info, k8s_namespace_name)",
+            "definition": "label_values(target_info, k8s_namespace_name)",
+            "label": "Namespace",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "refresh": 2,
+            "sort": 1,
+            "hide": 0
+          },
+          {
+            "name": "node",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(system_cpu_time, host_name)",
+            "definition": "label_values(system_cpu_time, host_name)",
+            "label": "Node / Host",
+            "description": "Discovered from Mimir system_cpu_time — no hardcoded NR hostnames.",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "refresh": 2,
+            "sort": 1,
+            "hide": 0
+          },
+          {
+            "name": "service",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource_mimir}"
+            },
+            "query": "label_values(http_server_request_duration_bucket, job)",
+            "definition": "label_values(http_server_request_duration_bucket, job)",
+            "label": "App / Job",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "refresh": 2,
+            "sort": 1,
+            "hide": 0
+          },
+          {
+            "name": "log_host",
+            "type": "query",
+            "datasource": {
+              "type": "loki",
+              "uid": "${datasource_loki}"
+            },
+            "query": "label_values({host_name=~\".+\"}, host_name)",
+            "definition": "label_values({host_name=~\".+\"}, host_name)",
+            "label": "Log Host",
+            "description": "Discovered from Loki host_name label.",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".+",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "refresh": 2,
+            "sort": 1,
+            "hide": 0
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "POD1 Dashboard - 6.19 (Postgres)",
+          "type": "row",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "collapsed": true,
+          "panels": [
+            {
+              "id": 2,
+              "title": "Markdown",
+              "type": "text",
+              "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 16,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "# POD1 Dashboard - 6.19 (Postgres)"
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 3,
+              "title": "Other Dashboards",
+              "type": "text",
+              "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 8,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "## Other Dashboards\n\nSee New Relic linked dashboards in import notes."
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 4,
+              "title": "Node 01 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 5,
+              "title": "Node 01 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "title": "Node 01 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "title": "Node 02 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 8,
+              "title": "Node 02 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 9,
+              "title": "Node 02 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 10,
+              "title": "Node 03 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 11,
+              "title": "Node 03 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 12,
+              "title": "Node 03 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 13,
+              "title": "Node 04 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 36,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 14,
+              "title": "Node 04 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 36,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 15,
+              "title": "Node 04 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 36,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 16,
+              "title": "High Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 45,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name, process_command) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Process RSS (GB)",
+                  "range": true,
+                  "refId": "A"
+                }
+              ]
+            },
+            {
+              "id": 17,
+              "title": "Overall Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 45,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * sum by (host_name) (system_memory_usage{state=\"used\", host_name=~\"$node\"}) / clamp_min(sum by (host_name) (system_memory_usage{host_name=~\"$node\"}), 1e-9)",
+                  "legendFormat": "Memory used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ]
+            },
+            {
+              "id": 18,
+              "title": "Thread Count > 500",
+              "type": "stat",
+              "gridPos": {
+                "x": 16,
+                "y": 45,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name, process_command) (process_threads{host_name=~\"$node\"}) or count by (host_name) (process_memory_usage{host_name=~\"$node\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "Proxy via process_threads or process count."
+            },
+            {
+              "id": 19,
+              "title": "Critical Application Errors(App & Batch JVM)",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 54,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 20,
+              "title": "Major Database Exception",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 63,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 21,
+              "title": "Imperforment DB Queries",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 72,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 22,
+              "title": "All Exception in Application JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 81,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 23,
+              "title": "All Exception in the BATCH JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 90,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 24,
+              "title": "All Exception in the Report Delivery Batch since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 99,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 25,
+              "title": "All RUD OR Mobile Logs since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 108,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 26,
+              "title": "Exception in SCS Server Logs since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 117,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 27,
+              "title": "Exception in Config Server Logs since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 126,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 28,
+              "title": "All Exception in the RT JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 135,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 29,
+              "title": "All Exception in the MSJ JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 144,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 30,
+              "title": "All Exception in the MQ since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 153,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 31,
+              "title": "All Exception in the Reports since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 162,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 32,
+              "title": "DB CPU utilization",
+              "type": "text",
+              "gridPos": {
+                "x": 0,
+                "y": 171,
+                "w": 8,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "### Requires CloudWatch/RDS metrics\n\nThis NR panel queried `aws.rds.CPUUtilization` which is **not in the current Mimir pipeline**."
+              },
+              "description": "NR RDS metric — needs CloudWatch integration.",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 33,
+              "title": "Per-host CPU usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 171,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU usage %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 34,
+              "title": "Per Tenant User Session",
+              "type": "stat",
+              "gridPos": {
+                "x": 16,
+                "y": 171,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            },
+            {
+              "id": 35,
+              "title": "Login Page Load time",
+              "type": "text",
+              "gridPos": {
+                "x": 0,
+                "y": 180,
+                "w": 10,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "### Requires synthetic monitoring\n\nOriginal NR query: `SyntheticCheck` / PLPM monitors — **not in Mimir**."
+              },
+              "description": "NR SyntheticCheck — needs synthetic monitoring datasource.",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            }
+          ]
+        },
+        {
+          "id": 36,
+          "title": "POD2 Dashboard - 6.18 (Postgres)",
+          "type": "row",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "collapsed": true,
+          "panels": [
+            {
+              "id": 37,
+              "title": "Markdown",
+              "type": "text",
+              "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 16,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "# POD2 Dashboard - 6.18 (Postgres)"
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 38,
+              "title": "Other Dashboards",
+              "type": "text",
+              "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 8,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "## Other Dashboards\n\nSee New Relic linked dashboards in import notes."
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 39,
+              "title": "Node 01 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 40,
+              "title": "Node 01 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 41,
+              "title": "Node 01 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 42,
+              "title": "Node 02 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 43,
+              "title": "Node 02 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 44,
+              "title": "Node 02 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 45,
+              "title": "Node 03 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 46,
+              "title": "Node 03 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 47,
+              "title": "Node 03 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 48,
+              "title": "Node 04 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 36,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 49,
+              "title": "Node 04 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 36,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 50,
+              "title": "Node 04 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 36,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 51,
+              "title": "Major Exception(Out Of Memory, Java heap space, Transaction Rollback, Thread Hung, Thread Pool Size) in last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 45,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 52,
+              "title": "DB Exception (Transaction timed out, BadSqlGrammarException, DB Connection not available, Query Performance issue, DB Connection is closed, SQLException) in last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 54,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 53,
+              "title": "All Exception in APP JVM since last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 63,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 54,
+              "title": "All Exception in BATCH JVM since last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 72,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 55,
+              "title": "All Exception in RT JVM since last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 81,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 56,
+              "title": "All Exception in MSJ JVM since last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 90,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 57,
+              "title": "All Exception in MQ since last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 99,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 58,
+              "title": "Per Tenant DB Session",
+              "type": "stat",
+              "gridPos": {
+                "x": 0,
+                "y": 108,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            },
+            {
+              "id": 59,
+              "title": "Login Page Load time",
+              "type": "text",
+              "gridPos": {
+                "x": 8,
+                "y": 108,
+                "w": 10,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "### Requires synthetic monitoring\n\nOriginal NR query: `SyntheticCheck` / PLPM monitors — **not in Mimir**."
+              },
+              "description": "NR SyntheticCheck — needs synthetic monitoring datasource.",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 60,
+              "title": "User Sessions",
+              "type": "stat",
+              "gridPos": {
+                "x": 18,
+                "y": 108,
+                "w": 6,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            },
+            {
+              "id": 61,
+              "title": "Per Tenant UOB Session",
+              "type": "stat",
+              "gridPos": {
+                "x": 0,
+                "y": 117,
+                "w": 24,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            }
+          ]
+        },
+        {
+          "id": 62,
+          "title": "EWB Dashboard - 6.17(Postgres)",
+          "type": "row",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 2
+          },
+          "collapsed": true,
+          "panels": [
+            {
+              "id": 63,
+              "title": "Markdown",
+              "type": "text",
+              "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 16,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "# EWB Dashboard - 6.17(Postgres)"
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 64,
+              "title": "Other Dashboards",
+              "type": "text",
+              "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 8,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "## Other Dashboards\n\nSee New Relic linked dashboards in import notes."
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 65,
+              "title": "Node 01 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 66,
+              "title": "Node 01 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 67,
+              "title": "Node 01 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 68,
+              "title": "Node 02 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 69,
+              "title": "Node 02 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 70,
+              "title": "Node 02 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 71,
+              "title": "Node 03 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 72,
+              "title": "Node 03 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 73,
+              "title": "Node 03 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 74,
+              "title": "Major Exception(Out Of Memory, Java heap space, Transaction Rollback, Thread Hung, Thread Pool Size) in last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 45,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 75,
+              "title": "DB Exception (Transaction timed out, BadSqlGrammarException, DB Connection not available, Query Performance issue, DB Connection is closed, SQLException) in last 3 hours.",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 54,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 76,
+              "title": "All Exception in Application JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 63,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 77,
+              "title": "All Exception in the Payment Aggregator MS since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 72,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 78,
+              "title": "All Exception in the HK MS since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 81,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 79,
+              "title": "All Exception in the BATCH JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 90,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 80,
+              "title": "All Exception on Msi Server since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 99,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 81,
+              "title": "All Exception on RT Server since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 108,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 82,
+              "title": "Per Tenant UOB Session",
+              "type": "stat",
+              "gridPos": {
+                "x": 0,
+                "y": 117,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            },
+            {
+              "id": 83,
+              "title": "All Exception in the MQ since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 117,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 84,
+              "title": "Login Page Load time",
+              "type": "text",
+              "gridPos": {
+                "x": 8,
+                "y": 117,
+                "w": 10,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "### Requires synthetic monitoring\n\nOriginal NR query: `SyntheticCheck` / PLPM monitors — **not in Mimir**."
+              },
+              "description": "NR SyntheticCheck — needs synthetic monitoring datasource.",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 85,
+              "title": "User Sessions",
+              "type": "stat",
+              "gridPos": {
+                "x": 18,
+                "y": 117,
+                "w": 6,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            }
+          ]
+        },
+        {
+          "id": 86,
+          "title": "SBNA Dashboard - 6.17(Postgres)",
+          "type": "row",
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 3
+          },
+          "collapsed": true,
+          "panels": [
+            {
+              "id": 87,
+              "title": "Markdown",
+              "type": "text",
+              "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 16,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "# SBNA Dashboard - 6.17(Postgres)"
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 88,
+              "title": "Other Dashboards",
+              "type": "text",
+              "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 8,
+                "h": 9
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "## Other Dashboards\n\nSee New Relic linked dashboards in import notes."
+              },
+              "description": "",
+              "pluginVersion": "13.0.1",
+              "transparent": false
+            },
+            {
+              "id": 89,
+              "title": "Node 01 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 90,
+              "title": "Node 01 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 91,
+              "title": "Node 01 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 9,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 92,
+              "title": "Node 02 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 93,
+              "title": "Node 02 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 94,
+              "title": "Node 02 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 18,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 95,
+              "title": "Node 03 CPU",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 0,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "100 * (1 - sum by (host_name) (rate(system_cpu_time{state=\"idle\", host_name=~\"$node\"}[5m])) / clamp_min(sum by (host_name) (rate(system_cpu_time{host_name=~\"$node\"}[5m])), 1e-9))",
+                  "legendFormat": "CPU used %",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "CPU % from system_cpu_time. Filter hosts via **Node / Host** dropdown (discovered from Mimir)."
+            },
+            {
+              "id": 96,
+              "title": "Node 03 Heap Memory Usage",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 8,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "decgbytes",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Used Heap (GB)",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "max by (host_name) (process_memory_usage{host_name=~\"$node\", process_command=~\".*java.*\"}) / 1e9",
+                  "legendFormat": "Max/Committed proxy",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 97,
+              "title": "Node 03 Response Time",
+              "type": "timeseries",
+              "gridPos": {
+                "x": 16,
+                "y": 27,
+                "w": 8,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 10,
+                    "showPoints": "never"
+                  },
+                  "unit": "ms",
+                  "min": null,
+                  "max": null
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p50 ms",
+                  "range": true,
+                  "refId": "A"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_bucket{job=~\"$service\", host_name=~\"$node\", http_route!~\"/actuator.*|/health.*\"}[5m]))) * 1000",
+                  "legendFormat": "p95 ms",
+                  "range": true,
+                  "refId": "B"
+                }
+              ]
+            },
+            {
+              "id": 98,
+              "title": "Critical Application Errors(App & Batch JVM)",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 45,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 99,
+              "title": "Major Database Exception",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 54,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 100,
+              "title": "Imperforment DB Queries",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 63,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 101,
+              "title": "All Exception in Application JVM",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 72,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 102,
+              "title": "All Exception in the BATCH JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 81,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 103,
+              "title": "All Exception in the RT JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 90,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 104,
+              "title": "All Exception in the MSJ JVM since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 99,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 105,
+              "title": "All Exception in the MQ since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 108,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 106,
+              "title": "All Exception in the Web since last 3 hours",
+              "type": "logs",
+              "gridPos": {
+                "x": 0,
+                "y": 117,
+                "w": 24,
+                "h": 9
+              },
+              "description": "Converted from NR Log NRQL (3h window in source).",
+              "datasource": {
+                "type": "loki",
+                "uid": "${datasource_loki}"
+              },
+              "options": {
+                "dedupStrategy": "none",
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": true,
+                "showTime": true,
+                "sortOrder": "Descending",
+                "wrapLogMessage": true
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "loki",
+                    "uid": "${datasource_loki}"
+                  },
+                  "editorMode": "code",
+                  "expr": "{host_name=~\"$log_host\"}",
+                  "queryType": "range",
+                  "refId": "A"
+                }
+              ],
+              "pluginVersion": "13.0.1"
+            },
+            {
+              "id": 107,
+              "title": "User Sessions",
+              "type": "stat",
+              "gridPos": {
+                "x": 18,
+                "y": 117,
+                "w": 6,
+                "h": 9
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource_mimir}"
+              },
+              "pluginVersion": "13.0.1",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource_mimir}"
+                  },
+                  "editorMode": "code",
+                  "expr": "sum by (pool_name) (db_client_connections_usage{job=~\"$service\", state=\"used\"})",
+                  "legendFormat": "__auto",
+                  "range": true,
+                  "refId": "A"
+                }
+              ],
+              "description": "NR DatabaseSessionSample (uob_session_*) is not in Mimir. Showing db_client_connections_usage proxy."
+            }
+          ]
+        }
+      ]
+    }
