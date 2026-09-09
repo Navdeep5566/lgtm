@@ -34,4 +34,5 @@ count(tomcat_thread_count)
 count(process_threads)
 count(process_runtime_jvm_memory_usage)
 {k8s_namespace_name=~".+"} | limit 20
+{k8s_namespace_name="uq01"} |~ "(?i)(SQLException|PSQLException|Deadlock)"
 count(system_memory_usage{host_name=~".+"})
