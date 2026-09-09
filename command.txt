@@ -31,3 +31,5 @@ count(system_cpu_time)
 
 count(process_memory_usage{host_name=~".+"})
 count(process_runtime_jvm_memory_usage)
+{k8s_namespace_name=~".+"} | limit 20
+count(system_memory_usage{host_name=~".+"})
