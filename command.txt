@@ -28,3 +28,6 @@ count by (__name__) ({__name__=~"ibmmq_queue_.*time.*"})
 ---------L3 dashbaord---
 label_values(system_cpu_time, host_name)
 count(system_cpu_time)
+
+count(process_memory_usage{host_name=~".+"})
+count(process_runtime_jvm_memory_usage)
